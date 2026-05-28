@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("STUDENT") // STUDENT or ADMIN
+  streak    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notes       Note[]
+  analytics   Analytics[]
+  studyPlans  StudyPlan[]
+}
+
+model Chapter {
+  id          Int      @id @default(autoincrement())
+  subject     String   // Physics, Chemistry, Botany, Zoology
+  name        String
+  description String?
+
+  notes       Note[]
+  mcqs        Mcq[]
+}
+
+model Note {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String   // Markdown
+  subject   String
+  isFavorite Boolean @default(false)
+  chapterId Int?
+  chapter   Chapter? @relation(fields: [chapterId], references: [id])
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Mcq {
+  id            Int      @id @default(autoincrement())
+  question      String
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctOption String   // A, B, C, or D
+  explanation   String?
+  difficulty    String   @default("MEDIUM") // EASY, MEDIUM, HARD
+  subject       String
+  chapterId     Int?
+  chapter       Chapter? @relation(fields: [chapterId], references: [id])
+}
+
+model Formula {
+  id        Int      @id @default(autoincrement())
+  subject   String
+  title     String
+  content   String
+  imageUrl  String?
+}
+
+model Diagram {
+  id        Int      @id @default(autoincrement())
+  subject   String
+  title     String
+  imageUrl  String
+  labels    String   // JSON string of labels
+}
+
+model Analytics {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id])
+  subject      String
+  score        Int
+  totalAttempt Int
+  date         DateTime @default(now())
+}
+
+model StudyPlan {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  goal      String
+  planJson  String   // AI generated plan in JSON format
+  createdAt DateTime @default(now())
+}
