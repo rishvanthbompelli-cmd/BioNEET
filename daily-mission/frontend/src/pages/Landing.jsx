@@ -1,8 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BrainCircuit, Rocket, Target, Zap, LayoutDashboard, Database, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Rocket, Target, Zap, LayoutDashboard, Database } from 'lucide-react';
 import { motion } from 'framer-motion';
-import Navbar from '../components/Navbar';
 
 const FeatureCard = ({ icon: Icon, title, description, colorClass }) => (
   <motion.div 
@@ -21,8 +20,6 @@ const FeatureCard = ({ icon: Icon, title, description, colorClass }) => (
 export default function Landing() {
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
       {/* Hero Section */}
       <div className="flex-1 flex flex-col items-center justify-center text-center px-4 relative pt-20 pb-32">
         {/* Background glow effects */}
