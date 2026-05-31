@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { UserPlus, Mail, Lock, User, Loader2 } from 'lucide-react';
-import axios from 'axios';
+import { authApi } from '../lib/api';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -18,13 +18,7 @@ export default function Register() {
     setError('');
 
     try {
-      await axios.post('http://localhost:5000/api/auth/register', { name, email, password }).catch(err => {
-         if(err.code === 'ERR_NETWORK') {
-           console.warn("Backend not running, simulating register success");
-           return { data: { message: "Mock success" }};
-         }
-         throw err;
-      });
+      await authApi.register({ name, email, password });
       navigate('/login');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');

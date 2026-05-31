@@ -8,7 +8,7 @@ export default function Navbar() {
 
   return (
     <nav className="glass-panel sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
-      <Link to="/" className="text-2xl font-bold text-gradient glow-effect">
+      <Link to="/" className="group text-2xl font-bold text-gradient glow-effect">
         Daily Mission
       </Link>
       

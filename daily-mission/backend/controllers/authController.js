@@ -66,7 +66,17 @@ const loginUser = async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, streak: user.streak }
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        streak: user.streak,
+        examMode: user.examMode,
+        dailyHours: user.dailyHours,
+        targetRank: user.targetRank,
+        weakSubjects: user.weakSubjects,
+      },
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -78,7 +88,7 @@ const getProfile = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
-      select: { id: true, name: true, email: true, role: true, streak: true, createdAt: true }
+      select: { id: true, name: true, email: true, role: true, streak: true, examMode: true, dailyHours: true, targetRank: true, weakSubjects: true, createdAt: true }
     });
 
     if (!user) {
@@ -92,4 +102,24 @@ const getProfile = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser, getProfile };
+const updateProfile = async (req, res) => {
+  try {
+    const { name, examMode, dailyHours, targetRank, weakSubjects } = req.body;
+    const user = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: {
+        ...(name && { name }),
+        ...(examMode && { examMode }),
+        ...(dailyHours && { dailyHours: parseInt(dailyHours, 10) }),
+        ...(targetRank && { targetRank: parseInt(targetRank, 10) }),
+        ...(weakSubjects && { weakSubjects: JSON.stringify(weakSubjects) }),
+      },
+      select: { id: true, name: true, email: true, role: true, streak: true, examMode: true, dailyHours: true, targetRank: true, weakSubjects: true },
+    });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update profile' });
+  }
+};
+
+module.exports = { registerUser, loginUser, getProfile, updateProfile };

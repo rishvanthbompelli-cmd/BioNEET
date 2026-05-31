@@ -8,41 +8,54 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String
-  password  String
-  role      String   @default("STUDENT") // STUDENT or ADMIN
-  streak    Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  name         String
+  password     String
+  role         String   @default("STUDENT")
+  streak       Int      @default(0)
+  examMode     String?  @default("NEET")
+  dailyHours   Int      @default(4)
+  targetRank   Int?
+  weakSubjects String?  // JSON array
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  notes       Note[]
-  analytics   Analytics[]
-  studyPlans  StudyPlan[]
+  notes         Note[]
+  analytics     Analytics[]
+  studyPlans    StudyPlan[]
+  mcqAttempts   McqAttempt[]
+  revisions     Revision[]
+  mockScores    MockScore[]
+  quizzes       Quiz[]
+  studySessions StudySession[]
 }
 
 model Chapter {
-  id          Int      @id @default(autoincrement())
-  subject     String   // Physics, Chemistry, Botany, Zoology
+  id          Int     @id @default(autoincrement())
+  subject     String
   name        String
   description String?
+  weightage   Int     @default(5)
 
-  notes       Note[]
-  mcqs        Mcq[]
+  notes     Note[]
+  mcqs      Mcq[]
+  revisions Revision[]
 }
 
 model Note {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String   // Markdown
-  subject   String
-  isFavorite Boolean @default(false)
-  chapterId Int?
-  chapter   Chapter? @relation(fields: [chapterId], references: [id])
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  title      String
+  content    String
+  subject    String
+  highlights String?
+  memoryTrick String?
+  isFavorite Boolean  @default(false)
+  chapterId  Int?
+  chapter    Chapter? @relation(fields: [chapterId], references: [id])
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
 }
 
 model Mcq {
@@ -52,28 +65,114 @@ model Mcq {
   optionB       String
   optionC       String
   optionD       String
-  correctOption String   // A, B, C, or D
+  correctOption String
   explanation   String?
-  difficulty    String   @default("MEDIUM") // EASY, MEDIUM, HARD
+  difficulty    String   @default("MEDIUM")
   subject       String
+  questionType  String   @default("MCQ")
   chapterId     Int?
   chapter       Chapter? @relation(fields: [chapterId], references: [id])
+  attempts      McqAttempt[]
+}
+
+model McqAttempt {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  user           User     @relation(fields: [userId], references: [id])
+  mcqId          Int
+  mcq            Mcq      @relation(fields: [mcqId], references: [id])
+  selectedOption String
+  isCorrect      Boolean
+  timeSpentSec   Int      @default(0)
+  createdAt      DateTime @default(now())
 }
 
 model Formula {
-  id        Int      @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   subject   String
   title     String
   content   String
+  category  String  @default("general")
+  shortcut  String?
   imageUrl  String?
 }
 
 model Diagram {
-  id        Int      @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
   subject   String
   title     String
   imageUrl  String
-  labels    String   // JSON string of labels
+  labels    String
+  category  String @default("general")
+}
+
+model Handbook {
+  id       Int    @id @default(autoincrement())
+  title    String
+  subject  String
+  category String
+  content  String
+}
+
+model MockTest {
+  id              Int         @id @default(autoincrement())
+  title           String
+  mode            String
+  durationMinutes Int
+  subject         String?
+  totalQuestions  Int
+  questionsJson   String
+  isPublished     Boolean     @default(true)
+  mockScores      MockScore[]
+}
+
+model MockScore {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  user             User     @relation(fields: [userId], references: [id])
+  mockTestId       Int
+  mockTest         MockTest @relation(fields: [mockTestId], references: [id])
+  score            Int
+  totalQuestions   Int
+  timeTakenMinutes Int
+  answersJson      String
+  percentile       Float?
+  createdAt        DateTime @default(now())
+}
+
+model Revision {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+  chapterId     Int
+  chapter       Chapter   @relation(fields: [chapterId], references: [id])
+  status        String    @default("NOT_STARTED")
+  revisionCount Int       @default(0)
+  lastRevisedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([userId, chapterId])
+}
+
+model Quiz {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id])
+  subject       String
+  chapter       String?
+  topic         String
+  questionsJson String
+  createdAt     DateTime @default(now())
+}
+
+model StudySession {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id])
+  subject         String
+  durationMinutes Int
+  date            DateTime @default(now())
 }
 
 model Analytics {
@@ -91,6 +190,14 @@ model StudyPlan {
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
   goal      String
-  planJson  String   // AI generated plan in JSON format
+  planJson  String
+  createdAt DateTime @default(now())
+}
+
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 }

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { LogIn, Mail, Lock, Loader2 } from 'lucide-react';
-import axios from 'axios';
+import { authApi } from '../lib/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -18,15 +18,7 @@ export default function Login() {
     setError('');
 
     try {
-      // Allow mocking logic for fast UI dev if backend is down
-      const res = await axios.post('http://localhost:5000/api/auth/login', { email, password }).catch(err => {
-        if(err.code === 'ERR_NETWORK') {
-           console.warn("Backend not running, simulating login");
-           return { data: { token: 'mock_token', user: { id: 1, name: 'Student', email, role: 'STUDENT', streak: 2 }}};
-        }
-        throw err;
-      });
-      
+      const res = await authApi.login({ email, password });
       login(res.data.user, res.data.token);
       navigate('/dashboard');
     } catch (err) {
