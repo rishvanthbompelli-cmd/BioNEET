@@ -1,17 +1,18 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { LogOut, User as UserIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
-export default function Navbar() {
-  const { user, isAuthenticated, logout } = useAuthStore();
+export default function Navbar({ onLogout }) {
+  const { user, isAuthenticated } = useAuthStore();
+  const logout = onLogout || useAuthStore.getState().logout;
 
   return (
     <nav className="glass-panel sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
-      <Link to="/" className="group text-2xl font-bold text-gradient glow-effect">
-        Daily Mission
+      <Link to={isAuthenticated ? '/dashboard' : '/'} className="group text-2xl font-bold text-gradient glow-effect">
+        BioNEET
       </Link>
-      
+
       <div className="flex items-center gap-4">
         {isAuthenticated ? (
           <>
@@ -20,9 +21,9 @@ export default function Navbar() {
               <span className="hidden md:inline">{user?.name}</span>
             </div>
             <div className="bg-primary-500/20 text-primary-400 px-3 py-1 rounded-full text-sm font-semibold border border-primary-500/30">
-              🔥 Streak: {user?.streak || 0}
+              🔥 {user?.streak || 0}
             </div>
-            <button 
+            <button
               onClick={logout}
               className="text-slate-400 hover:text-red-400 transition-colors ml-4"
               title="Logout"

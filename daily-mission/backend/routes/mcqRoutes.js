@@ -3,8 +3,9 @@ const { getMcqs, submitAttempt, getLeaderboard } = require('../controllers/mcqCo
 const { authMiddleware } = require('../middleware/authMiddleware');
 
 const router = express.Router();
+router.use(authMiddleware);
 router.get('/', getMcqs);
 router.get('/leaderboard', getLeaderboard);
-router.post('/:id/attempt', authMiddleware, submitAttempt);
+router.post('/:id/attempt', submitAttempt);
 
 module.exports = router;

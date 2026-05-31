@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import {
   LayoutDashboard, BookOpen, PenTool, LayoutTemplate, FlaskConical,
-  Target, Award, Brain, Image, BookMarked, RotateCcw, Settings, Shield,
+  Target, Award, Brain, Image, BookMarked, RotateCcw, Shield, FileText,
 } from 'lucide-react';
 
 const navItems = [
@@ -14,11 +14,11 @@ const navItems = [
   { icon: PenTool, label: 'Quiz Gen', path: '/quiz-gen' },
   { icon: LayoutTemplate, label: 'Mock Tests', path: '/mock-tests' },
   { icon: RotateCcw, label: 'Revision', path: '/revision' },
+  { icon: FileText, label: 'Papers', path: '/papers' },
   { icon: FlaskConical, label: 'Formulas', path: '/formulas' },
   { icon: Image, label: 'Diagrams', path: '/diagrams' },
   { icon: BookMarked, label: 'Handbook', path: '/handbook' },
   { icon: Award, label: 'Analytics', path: '/analytics' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
   { icon: Shield, label: 'Admin', path: '/admin', adminOnly: true },
 ];
 

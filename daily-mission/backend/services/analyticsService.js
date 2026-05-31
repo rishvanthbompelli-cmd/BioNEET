@@ -11,6 +11,7 @@ async function getDashboardStats(userId) {
     mockScores,
     studySessions,
     studyPlan,
+    recentQuizzes,
   ] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId } }),
     prisma.chapter.count(),
@@ -33,6 +34,11 @@ async function getDashboardStats(userId) {
     prisma.studyPlan.findFirst({
       where: { userId },
       orderBy: { createdAt: 'desc' },
+    }),
+    prisma.quiz.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
     }),
   ]);
 
@@ -77,6 +83,8 @@ async function getDashboardStats(userId) {
     }
   }
 
+  const recentActivity = buildRecentActivity(mcqAttempts, studySessions, mockScores, recentQuizzes);
+
   return {
     user: {
       name: user?.name,
@@ -107,6 +115,14 @@ async function getDashboardStats(userId) {
     })),
     dailyMission,
     studyPlanId: studyPlan?.id || null,
+    recentActivity,
+    savedPlan: studyPlan
+      ? {
+          id: studyPlan.id,
+          goal: studyPlan.goal,
+          plan: (() => { try { return JSON.parse(studyPlan.planJson); } catch { return null; } })(),
+        }
+      : null,
   };
 }
 
@@ -140,6 +156,51 @@ function getHeatLevel(minutes) {
   if (minutes < 60) return 2;
   if (minutes < 120) return 3;
   return 4;
+}
+
+function buildRecentActivity(mcqAttempts, studySessions, mockScores, quizzes) {
+  const items = [];
+
+  mcqAttempts.slice(0, 15).forEach((a) => {
+    items.push({
+      type: 'mcq',
+      label: `${a.isCorrect ? 'Correct' : 'Wrong'} MCQ in ${a.mcq?.subject || 'Unknown'}`,
+      subject: a.mcq?.subject,
+      success: a.isCorrect,
+      date: a.createdAt,
+    });
+  });
+
+  studySessions.slice(0, 10).forEach((s) => {
+    items.push({
+      type: 'study',
+      label: `Studied ${s.subject} for ${s.durationMinutes} min`,
+      subject: s.subject,
+      minutes: s.durationMinutes,
+      date: s.date,
+    });
+  });
+
+  mockScores.slice(0, 5).forEach((m) => {
+    items.push({
+      type: 'mock',
+      label: `Mock test: ${m.mockTest?.title} — ${Math.round((m.score / m.totalQuestions) * 100)}%`,
+      date: m.createdAt,
+    });
+  });
+
+  quizzes.forEach((q) => {
+    items.push({
+      type: 'quiz',
+      label: `AI quiz: ${q.subject} — ${q.topic}`,
+      subject: q.subject,
+      date: q.createdAt,
+    });
+  });
+
+  return items
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 20);
 }
 
 async function getFullAnalytics(userId) {

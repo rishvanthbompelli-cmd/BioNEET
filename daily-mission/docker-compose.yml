@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bioneet
+      POSTGRES_PASSWORD: bioneet_dev
+      POSTGRES_DB: bioneet
+    ports:
+      - "5432:5432"
+    volumes:
+      - bioneet_pg_data:/var/lib/postgresql/data
+
+volumes:
+  bioneet_pg_data:

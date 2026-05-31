@@ -59,25 +59,36 @@ const getStudyPlans = async (req, res) => {
 
 const generateQuizHandler = async (req, res) => {
   try {
-    const { subject, chapter, topic, examMode } = req.body;
-    if (!subject || !topic) {
-      return res.status(400).json({ message: 'Subject and topic are required' });
+    const { subject, chapter, topic, examMode, quizType = 'chapter' } = req.body;
+
+    if (quizType === 'chapter' && (!subject || !chapter)) {
+      return res.status(400).json({ message: 'Subject and chapter are required for chapter quiz' });
+    }
+    if (quizType === 'subject' && !subject) {
+      return res.status(400).json({ message: 'Subject is required for subject quiz' });
     }
 
-    const questions = await generateQuiz({ subject, chapter, topic, examMode });
+    const questions = await generateQuiz({
+      quizType,
+      subject: subject || 'Mixed',
+      chapter,
+      topic: topic || chapter || quizType,
+      examMode: quizType === 'eapcet_full' ? 'EAPCET' : quizType === 'neet_full' ? 'NEET' : examMode,
+    });
 
     const quiz = await prisma.quiz.create({
       data: {
         userId: req.user.userId,
-        subject,
-        chapter: chapter || '',
-        topic,
+        subject: subject || 'Mixed',
+        chapter: chapter || quizType,
+        topic: topic || chapter || quizType,
         questionsJson: JSON.stringify(questions),
       },
     });
 
-    res.status(201).json({ id: quiz.id, questions });
+    res.status(201).json({ id: quiz.id, quizType, count: questions.length, questions });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Failed to generate quiz' });
   }
 };

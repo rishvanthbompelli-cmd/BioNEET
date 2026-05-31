@@ -1,12 +1,17 @@
 const express = require('express');
-const { getNotes, getNoteById, toggleFavorite, createNote } = require('../controllers/notesController');
+const {
+  getNotes, getNoteById, createNote, updateNote, deleteNote, toggleFavorite,
+} = require('../controllers/notesController');
 const { authMiddleware } = require('../middleware/authMiddleware');
-const { adminMiddleware } = require('../middleware/authMiddleware');
 
 const router = express.Router();
+router.use(authMiddleware);
+
 router.get('/', getNotes);
 router.get('/:id', getNoteById);
-router.patch('/:id/favorite', authMiddleware, toggleFavorite);
-router.post('/', authMiddleware, adminMiddleware, createNote);
+router.post('/', createNote);
+router.put('/:id', updateNote);
+router.delete('/:id', deleteNote);
+router.patch('/:id/favorite', toggleFavorite);
 
 module.exports = router;

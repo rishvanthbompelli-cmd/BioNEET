@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, BookOpen, Target, BarChart3, Brain, MoreHorizontal,
+  LayoutDashboard, BookOpen, Target, BarChart3, Brain, BookMarked,
 } from 'lucide-react';
 
 const navItems = [
@@ -31,14 +31,14 @@ export default function BottomNav() {
           </NavLink>
         ))}
         <NavLink
-          to="/settings"
+          to="/handbook"
           className={({ isActive }) =>
             `flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors ${
               isActive ? 'text-primary-400' : 'text-slate-500'
             }`
           }
         >
-          <MoreHorizontal size={20} />
+          <BookMarked size={20} />
           <span className="text-[10px] font-medium">More</span>
         </NavLink>
       </div>

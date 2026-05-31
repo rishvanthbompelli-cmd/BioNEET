@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -11,55 +11,89 @@ model User {
   id           Int      @id @default(autoincrement())
   email        String   @unique
   name         String
-  password     String
+  password     String?
+  googleId     String?  @unique
   role         String   @default("STUDENT")
   streak       Int      @default(0)
   examMode     String?  @default("NEET")
   dailyHours   Int      @default(4)
   targetRank   Int?
-  weakSubjects String?  // JSON array
+  weakSubjects String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  notes         Note[]
-  analytics     Analytics[]
-  studyPlans    StudyPlan[]
-  mcqAttempts   McqAttempt[]
-  revisions     Revision[]
-  mockScores    MockScore[]
-  quizzes       Quiz[]
-  studySessions StudySession[]
+  notes          Note[]
+  analytics      Analytics[]
+  studyPlans     StudyPlan[]
+  mcqAttempts    McqAttempt[]
+  revisions      Revision[]
+  mockScores     MockScore[]
+  quizzes        Quiz[]
+  studySessions  StudySession[]
+  refreshTokens  RefreshToken[]
+  passwordResets PasswordReset[]
+  chatMessages   ChatMessage[]
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 model Chapter {
-  id          Int     @id @default(autoincrement())
-  subject     String
-  name        String
-  description String?
-  weightage   Int     @default(5)
+  id              Int     @id @default(autoincrement())
+  year            String
+  subject         String
+  name            String
+  description     String?
+  difficulty      String  @default("MEDIUM")
+  weightageLevel  String  @default("MEDIUM")
+  weightage       Int     @default(5)
+  linkedChapters  String?
+  isHighPriority  Boolean @default(false)
+  isRankBooster   Boolean @default(false)
+  isMostDifficult Boolean @default(false)
+  orderIndex      Int     @default(0)
 
   notes     Note[]
   mcqs      Mcq[]
   revisions Revision[]
+
+  @@unique([year, subject, name])
 }
 
 model Note {
-  id         Int      @id @default(autoincrement())
-  title      String
-  content    String
-  subject    String
-  highlights String?
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String
+  subject     String
+  highlights  String?
   memoryTrick String?
-  isFavorite Boolean  @default(false)
-  chapterId  Int?
-  chapter    Chapter? @relation(fields: [chapterId], references: [id])
-  userId     Int
-  user       User     @relation(fields: [userId], references: [id])
-  createdAt  DateTime @default(now())
+  isFavorite  Boolean  @default(false)
+  isShared    Boolean  @default(false)
+  chapterId   Int?
+  chapter     Chapter? @relation(fields: [chapterId], references: [id])
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Mcq {
-  id            Int      @id @default(autoincrement())
+  id            Int          @id @default(autoincrement())
   question      String
   optionA       String
   optionB       String
@@ -67,18 +101,18 @@ model Mcq {
   optionD       String
   correctOption String
   explanation   String?
-  difficulty    String   @default("MEDIUM")
+  difficulty    String       @default("MEDIUM")
   subject       String
-  questionType  String   @default("MCQ")
+  questionType  String       @default("MCQ")
   chapterId     Int?
-  chapter       Chapter? @relation(fields: [chapterId], references: [id])
+  chapter       Chapter?     @relation(fields: [chapterId], references: [id])
   attempts      McqAttempt[]
 }
 
 model McqAttempt {
   id             Int      @id @default(autoincrement())
   userId         Int
-  user           User     @relation(fields: [userId], references: [id])
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   mcqId          Int
   mcq            Mcq      @relation(fields: [mcqId], references: [id])
   selectedOption String
@@ -88,22 +122,22 @@ model McqAttempt {
 }
 
 model Formula {
-  id        Int     @id @default(autoincrement())
-  subject   String
-  title     String
-  content   String
-  category  String  @default("general")
-  shortcut  String?
-  imageUrl  String?
+  id       Int     @id @default(autoincrement())
+  subject  String
+  title    String
+  content  String
+  category String  @default("general")
+  shortcut String?
+  imageUrl String?
 }
 
 model Diagram {
-  id        Int    @id @default(autoincrement())
-  subject   String
-  title     String
-  imageUrl  String
-  labels    String
-  category  String @default("general")
+  id       Int    @id @default(autoincrement())
+  subject  String
+  title    String
+  imageUrl String
+  labels   String
+  category String @default("general")
 }
 
 model Handbook {
@@ -129,7 +163,7 @@ model MockTest {
 model MockScore {
   id               Int      @id @default(autoincrement())
   userId           Int
-  user             User     @relation(fields: [userId], references: [id])
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   mockTestId       Int
   mockTest         MockTest @relation(fields: [mockTestId], references: [id])
   score            Int
@@ -143,7 +177,7 @@ model MockScore {
 model Revision {
   id            Int       @id @default(autoincrement())
   userId        Int
-  user          User      @relation(fields: [userId], references: [id])
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   chapterId     Int
   chapter       Chapter   @relation(fields: [chapterId], references: [id])
   status        String    @default("NOT_STARTED")
@@ -158,7 +192,7 @@ model Revision {
 model Quiz {
   id            Int      @id @default(autoincrement())
   userId        Int
-  user          User     @relation(fields: [userId], references: [id])
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   subject       String
   chapter       String?
   topic         String
@@ -169,7 +203,7 @@ model Quiz {
 model StudySession {
   id              Int      @id @default(autoincrement())
   userId          Int
-  user            User     @relation(fields: [userId], references: [id])
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   subject         String
   durationMinutes Int
   date            DateTime @default(now())
@@ -178,7 +212,7 @@ model StudySession {
 model Analytics {
   id           Int      @id @default(autoincrement())
   userId       Int
-  user         User     @relation(fields: [userId], references: [id])
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   subject      String
   score        Int
   totalAttempt Int
@@ -188,7 +222,7 @@ model Analytics {
 model StudyPlan {
   id        Int      @id @default(autoincrement())
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   goal      String
   planJson  String
   createdAt DateTime @default(now())
@@ -199,5 +233,29 @@ model Announcement {
   title     String
   content   String
   isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model ExamPaper {
+  id        Int      @id @default(autoincrement())
+  state     String
+  year      Int
+  title     String
+  shift     String?
+  subject   String   @default("BiPC")
+  examType  String   @default("EAPCET")
+  fileUrl   String
+  driveUrl  String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String
+  content   String
+  sessionId String   @default("default")
   createdAt DateTime @default(now())
 }

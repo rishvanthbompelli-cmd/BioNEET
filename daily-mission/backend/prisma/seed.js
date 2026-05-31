@@ -1,5 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
+const { ALL_CHAPTERS, STUDY_ORDER } = require('../data/interSyllabus');
+const { copyPapersAndBuildSeed } = require('../scripts/copyPapers');
 
 const prisma = new PrismaClient();
 
@@ -21,6 +23,10 @@ async function main() {
   await prisma.handbook.deleteMany();
   await prisma.chapter.deleteMany();
   await prisma.announcement.deleteMany();
+  await prisma.examPaper.deleteMany();
+  await prisma.chatMessage.deleteMany();
+  await prisma.refreshToken.deleteMany();
+  await prisma.passwordReset.deleteMany();
 
   const adminPassword = await bcrypt.hash('admin123', 10);
   const studentPassword = await bcrypt.hash('student123', 10);
@@ -61,21 +67,22 @@ async function main() {
     },
   });
 
-  const chaptersData = [
-    { name: 'Plant Physiology', subject: 'Botany', weightage: 8 },
-    { name: 'Human Reproduction', subject: 'Zoology', weightage: 7 },
-    { name: 'Organic Chemistry: Basic Principles', subject: 'Chemistry', weightage: 9 },
-    { name: 'Thermodynamics', subject: 'Physics', weightage: 6 },
-    { name: 'Cell: Structure and Function', subject: 'Botany', weightage: 7 },
-    { name: 'Human Health and Disease', subject: 'Zoology', weightage: 6 },
-    { name: 'Electrochemistry', subject: 'Chemistry', weightage: 5 },
-    { name: 'Ray Optics', subject: 'Physics', weightage: 7 },
-  ];
-
+  const chapterByName = {};
+  const chapterByKey = {};
   const chapters = [];
-  for (const c of chaptersData) {
-    chapters.push(await prisma.chapter.create({ data: c }));
+  for (const c of ALL_CHAPTERS) {
+    const created = await prisma.chapter.create({ data: c });
+    chapters.push(created);
+    chapterByKey[`${c.year}|${c.subject}|${c.name}`] = created;
+    chapterByName[c.name] = created;
   }
+  console.log(`Seeded ${chapters.length} chapters (Inter 1st: ${ALL_CHAPTERS.filter(c => c.year === 'INTER_1').length}, Inter 2nd: ${ALL_CHAPTERS.filter(c => c.year === 'INTER_2').length})`);
+
+  const findChapter = (name, subject, year) => {
+    if (year && subject) return chapterByKey[`${year}|${subject}|${name}`];
+    if (subject) return chapters.find((c) => c.name === name && c.subject === subject) || chapterByName[name];
+    return chapterByName[name];
+  };
 
   const notesData = [
     {
@@ -84,7 +91,7 @@ async function main() {
       subject: 'Botany',
       highlights: 'C4 plants: Maize, Sugarcane | Photorespiration in C3',
       memoryTrick: 'C4 = HOT (Maize, Sugarcane, Sorghum in dry tropics)',
-      chapterId: chapters[0].id,
+      chapterId: findChapter('Photosynthesis').id,
     },
     {
       title: 'Human Reproduction - Quick Revision',
@@ -92,39 +99,74 @@ async function main() {
       subject: 'Zoology',
       highlights: 'FSH, LH, estrogen, progesterone roles',
       memoryTrick: 'FSH = Follicle Stimulating Hormone',
-      chapterId: chapters[1].id,
+      chapterId: findChapter('Human Reproduction').id,
     },
     {
-      title: 'Organic Chemistry Name Reactions',
+      title: 'Organic Chemistry Name Reactions (GOC)',
       content: '# Important Name Reactions\n\n## Friedel-Crafts Alkylation\n* Benzene + R-Cl / AlCl₃\n\n## Cannizzaro Reaction\n* Aldehydes without α-H → alcohol + acid salt',
       subject: 'Chemistry',
       highlights: 'SN1 vs SN2 | Electrophilic aromatic substitution',
-      chapterId: chapters[2].id,
+      chapterId: findChapter('Organic Chemistry: Basic Principles (GOC)').id,
     },
     {
       title: 'Thermodynamics - Formula Sheet',
       content: '# Thermodynamics\n\n## First Law\nΔQ = ΔU + ΔW\n\n## Second Law\nΔS_universe ≥ 0 for spontaneous processes\n\n## Carnot Efficiency\nη = 1 - T_c/T_h',
       subject: 'Physics',
       highlights: 'Isothermal: ΔU=0 | Adiabatic: ΔQ=0',
-      chapterId: chapters[3].id,
+      chapterId: findChapter('Thermodynamics', 'Physics', 'INTER_1').id,
+    },
+    {
+      title: 'Principles of Inheritance - Genetics Notes',
+      content: '# Genetics\n\n## Mendel\'s Laws\n* Law of Segregation\n* Law of Independent Assortment\n\n## Monohybrid cross ratio 3:1\n## Dihybrid cross ratio 9:3:3:1',
+      subject: 'Botany',
+      highlights: 'Test cross | Back cross | Incomplete dominance',
+      chapterId: findChapter('Principles of Inheritance & Variation').id,
+    },
+    {
+      title: 'Cell Structure - NCERT Quick Notes',
+      content: '# Cell Structure\n\n* Prokaryotic vs Eukaryotic\n* Cell organelles: ER, Golgi, Mitochondria, Plastids\n* Endosymbiotic theory',
+      subject: 'Botany',
+      highlights: 'Very High weightage for NEET/EAPCET',
+      chapterId: findChapter('Cell: Structure & Function').id,
     },
   ];
 
   for (const n of notesData) {
-    await prisma.note.create({ data: { ...n, userId: admin.id } });
+    await prisma.note.create({ data: { ...n, userId: admin.id, isShared: true } });
   }
 
+  for (const ch of ALL_CHAPTERS) {
+    const chapter = chapterByKey[`${ch.year}|${ch.subject}|${ch.name}`];
+    if (!chapter) continue;
+    const existing = notesData.find((n) => n.chapterId === chapter.id);
+    if (existing) continue;
+
+    await prisma.note.create({
+      data: {
+        title: `${ch.name} — Quick Notes`,
+        content: `# ${ch.name}\n\n**Subject:** ${ch.subject}\n**Year:** ${ch.year === 'INTER_1' ? 'Inter 1st Year' : 'Inter 2nd Year'}\n**Weightage:** ${ch.weightageLevel}\n**Difficulty:** ${ch.difficulty}\n\n## Key Points\n- Revise NCERT thoroughly for this chapter\n- Focus on high-yield diagrams and definitions\n- Practice ${ch.subject} MCQs after reading notes\n\n## Exam Tips\n- ${ch.isHighPriority ? '⭐ High priority for NEET/EAPCET' : 'Standard chapter — complete after high priority topics'}\n- ${ch.isRankBooster ? '⚡ Rank booster — scoring chapter' : 'Build strong fundamentals here'}`,
+        subject: ch.subject,
+        highlights: `${ch.weightageLevel} weightage · ${ch.difficulty} difficulty`,
+        memoryTrick: ch.isMostDifficult ? 'Break into subtopics and revise daily' : null,
+        chapterId: chapter.id,
+        userId: admin.id,
+        isShared: true,
+      },
+    });
+  }
+  console.log(`Seeded notes for all ${ALL_CHAPTERS.length} chapters`);
+
   const mcqsData = [
-    { question: 'Which of the following is an example of a C4 plant?', optionA: 'Wheat', optionB: 'Rice', optionC: 'Sugarcane', optionD: 'Potato', correctOption: 'C', explanation: 'Sugarcane, Maize, and Sorghum are C4 plants adapted to dry tropical regions.', difficulty: 'MEDIUM', subject: 'Botany', chapterId: chapters[0].id },
-    { question: 'Site of light reaction in chloroplast is:', optionA: 'Stroma', optionB: 'Grana', optionC: 'Matrix', optionD: 'Cristae', correctOption: 'B', explanation: 'Light reactions occur in grana thylakoids.', difficulty: 'EASY', subject: 'Botany', chapterId: chapters[0].id },
-    { question: 'Which hormone triggers ovulation?', optionA: 'FSH', optionB: 'LH', optionC: 'Prolactin', optionD: 'Oxytocin', correctOption: 'B', explanation: 'LH surge triggers ovulation.', difficulty: 'EASY', subject: 'Zoology', chapterId: chapters[1].id },
-    { question: 'Testosterone is secreted by:', optionA: 'Sertoli cells', optionB: 'Leydig cells', optionC: 'Granulosa cells', optionD: 'Pituitary', correctOption: 'B', explanation: 'Leydig (interstitial) cells secrete testosterone.', difficulty: 'MEDIUM', subject: 'Zoology', chapterId: chapters[1].id },
-    { question: 'SN2 reaction is favored by:', optionA: 'Tertiary halide', optionB: 'Primary halide', optionC: 'Bulky base', optionD: 'Polar protic solvent', correctOption: 'B', explanation: 'SN2 prefers primary substrates and polar aprotic solvents.', difficulty: 'HARD', subject: 'Chemistry', chapterId: chapters[2].id },
-    { question: 'Which has highest boiling point?', optionA: 'n-pentane', optionB: 'neopentane', optionC: 'isopentane', optionD: 'butane', correctOption: 'A', explanation: 'Straight chain alkanes have higher surface area for van der Waals forces.', difficulty: 'MEDIUM', subject: 'Chemistry', chapterId: chapters[2].id },
-    { question: 'First law of thermodynamics is conservation of:', optionA: 'Momentum', optionB: 'Energy', optionC: 'Mass', optionD: 'Charge', correctOption: 'B', explanation: 'First law: energy cannot be created or destroyed.', difficulty: 'EASY', subject: 'Physics', chapterId: chapters[3].id },
-    { question: 'Carnot engine efficiency depends on:', optionA: 'Working substance', optionB: 'Temperature of reservoirs', optionC: 'Pressure', optionD: 'Volume', correctOption: 'B', explanation: 'η = 1 - T_c/T_h', difficulty: 'MEDIUM', subject: 'Physics', chapterId: chapters[3].id },
-    { question: 'Cell wall in plants is primarily made of:', optionA: 'Chitin', optionB: 'Cellulose', optionC: 'Peptidoglycan', optionD: 'Lignin only', correctOption: 'B', explanation: 'Cellulose is the primary structural polysaccharide.', difficulty: 'EASY', subject: 'Botany', chapterId: chapters[4].id },
-    { question: 'HIV targets which cells?', optionA: 'RBC', optionB: 'Helper T cells', optionC: 'Neutrophils', optionD: 'Platelets', correctOption: 'B', explanation: 'HIV binds CD4 on helper T lymphocytes.', difficulty: 'MEDIUM', subject: 'Zoology', chapterId: chapters[5].id },
+    { question: 'Which of the following is an example of a C4 plant?', optionA: 'Wheat', optionB: 'Rice', optionC: 'Sugarcane', optionD: 'Potato', correctOption: 'C', explanation: 'Sugarcane, Maize, and Sorghum are C4 plants.', difficulty: 'MEDIUM', subject: 'Botany', chapterId: findChapter('Photosynthesis').id },
+    { question: 'Site of light reaction in chloroplast is:', optionA: 'Stroma', optionB: 'Grana', optionC: 'Matrix', optionD: 'Cristae', correctOption: 'B', explanation: 'Light reactions occur in grana thylakoids.', difficulty: 'EASY', subject: 'Botany', chapterId: findChapter('Photosynthesis').id },
+    { question: 'Which hormone triggers ovulation?', optionA: 'FSH', optionB: 'LH', optionC: 'Prolactin', optionD: 'Oxytocin', correctOption: 'B', explanation: 'LH surge triggers ovulation.', difficulty: 'EASY', subject: 'Zoology', chapterId: findChapter('Human Reproduction').id },
+    { question: 'Testosterone is secreted by:', optionA: 'Sertoli cells', optionB: 'Leydig cells', optionC: 'Granulosa cells', optionD: 'Pituitary', correctOption: 'B', explanation: 'Leydig cells secrete testosterone.', difficulty: 'MEDIUM', subject: 'Zoology', chapterId: findChapter('Human Reproduction').id },
+    { question: 'SN2 reaction is favored by:', optionA: 'Tertiary halide', optionB: 'Primary halide', optionC: 'Bulky base', optionD: 'Polar protic solvent', correctOption: 'B', explanation: 'SN2 prefers primary substrates.', difficulty: 'HARD', subject: 'Chemistry', chapterId: findChapter('Organic Chemistry: Basic Principles (GOC)').id },
+    { question: 'First law of thermodynamics is conservation of:', optionA: 'Momentum', optionB: 'Energy', optionC: 'Mass', optionD: 'Charge', correctOption: 'B', explanation: 'First law: energy cannot be created or destroyed.', difficulty: 'EASY', subject: 'Physics', chapterId: findChapter('Thermodynamics', 'Physics', 'INTER_1').id },
+    { question: 'Cell wall in plants is primarily made of:', optionA: 'Chitin', optionB: 'Cellulose', optionC: 'Peptidoglycan', optionD: 'Lignin only', correctOption: 'B', explanation: 'Cellulose is the primary structural polysaccharide.', difficulty: 'EASY', subject: 'Botany', chapterId: findChapter('Cell: Structure & Function').id },
+    { question: 'Mendel\'s law of segregation applies to:', optionA: 'Two traits', optionB: 'Single trait monohybrid cross', optionC: 'Linked genes', optionD: 'Polygenic traits', correctOption: 'B', explanation: 'Segregation explains 3:1 ratio in monohybrid cross.', difficulty: 'MEDIUM', subject: 'Botany', chapterId: findChapter('Principles of Inheritance & Variation').id },
+    { question: 'Semiconductor used in solar cells is mainly:', optionA: 'Ge', optionB: 'Si', optionC: 'Cu', optionD: 'Fe', correctOption: 'B', explanation: 'Silicon is widely used in solar cells.', difficulty: 'EASY', subject: 'Physics', chapterId: findChapter('Semiconductor Electronics').id },
+    { question: 'Coordination number of [Fe(CN)6]4- is:', optionA: '4', optionB: '6', optionC: '8', optionD: '2', correctOption: 'B', explanation: 'Six CN- ligands coordinate to Fe.', difficulty: 'MEDIUM', subject: 'Chemistry', chapterId: findChapter('Coordination Compounds').id },
   ];
 
   const mcqs = [];
@@ -167,10 +209,13 @@ async function main() {
   for (const d of diagrams) await prisma.diagram.create({ data: d });
 
   const handbooks = [
-    { title: 'NEET Last 30 Days Guide', subject: 'All', category: 'last-minute', content: '# Last 30 Days\n\n1. Revise NCERT line-by-line for Biology\n2. Daily 1 full mock\n3. Formula sheet revision every morning\n4. Weak topic drill: 2 hrs/day' },
-    { title: 'EAPCET Speed Booster', subject: 'All', category: 'rank-booster', content: '# EAPCET Speed Strategy\n\n* 80 questions in 80 minutes mindset\n* Skip lengthy questions first\n* Chemistry: direct formula application\n* Biology: NCERT keywords' },
-    { title: 'High Weightage Biology Chapters', subject: 'Botany', category: 'high-weightage', content: 'Plant Physiology, Genetics, Ecology, Morphology — combined ~25% weightage in NEET.' },
-    { title: 'Organic Chemistry Rapid Revision', subject: 'Chemistry', category: 'quick-revision', content: 'GOC, Isomerism, Name reactions, Biomolecules — focus on NCERT intext questions.' },
+    { title: 'Best Order to Study — Biology', subject: 'Botany', category: 'study-order', content: `# Best Study Order — Biology\n\n${STUDY_ORDER.biology.map((c, i) => `${i + 1}. ${c}`).join('\n')}` },
+    { title: 'Best Order to Study — Chemistry', subject: 'Chemistry', category: 'study-order', content: `# Best Study Order — Chemistry\n\n${STUDY_ORDER.chemistry.map((c, i) => `${i + 1}. ${c}`).join('\n')}` },
+    { title: 'Best Order to Study — Physics', subject: 'Physics', category: 'study-order', content: `# Best Study Order — Physics\n\n${STUDY_ORDER.physics.map((c, i) => `${i + 1}. ${c}`).join('\n')}` },
+    { title: 'NEET Rank Booster Chapters', subject: 'All', category: 'rank-booster', content: '# NEET Rank Boosters\n\nGenetics, Human Physiology, Ecology, Reproduction, Biotechnology, Electrostatics, Thermodynamics, Organic Chemistry (GOC)' },
+    { title: 'EAPCET Rank Booster Chapters', subject: 'All', category: 'rank-booster', content: '# EAPCET Rank Boosters\n\nPlant Physiology, Human Physiology, Genetics, Reproduction, Semiconductors, Communication Systems, p-Block, Solutions, Biomolecules' },
+    { title: 'Inter 1st Year — High Priority Chapters', subject: 'All', category: 'high-weightage', content: '# Inter 1 High Priority\n\n**Botany:** Cell Biology, Photosynthesis, Respiration, Plant Growth, Anatomy\n\n**Zoology:** Animal Kingdom, Circulation, Neural Control, Endocrine\n\n**Chemistry:** Chemical Bonding, Equilibrium, Thermodynamics, GOC\n\n**Physics:** Rotational Motion, Thermodynamics, Waves, SHM' },
+    { title: 'Inter 2nd Year — Highest Weightage', subject: 'All', category: 'high-weightage', content: '# Inter 2 Highest Weightage\n\n**Botany:** Genetics, Molecular Biology, Reproduction, Biotechnology\n\n**Zoology:** Human Reproduction, Human Health\n\n**Physics:** Semiconductors (easy scoring)\n\n**Chemistry:** p-Block, Coordination, Solutions, Organic' },
   ];
   for (const h of handbooks) await prisma.handbook.create({ data: h });
 
@@ -201,13 +246,22 @@ async function main() {
     },
   });
 
-  for (const ch of chapters.slice(0, 5)) {
+  const sampleRevisions = [
+    findChapter('Photosynthesis'),
+    findChapter('Cell: Structure & Function'),
+    findChapter('Principles of Inheritance & Variation'),
+    findChapter('Human Reproduction'),
+    findChapter('Chemical Bonding & Molecular Structure'),
+    findChapter('Semiconductor Electronics'),
+  ];
+  for (const ch of sampleRevisions) {
+    if (!ch) continue;
     await prisma.revision.create({
       data: {
         userId: student.id,
         chapterId: ch.id,
-        status: ch.id % 2 === 0 ? 'COMPLETED' : ch.id % 3 === 0 ? 'WEAK' : 'IN_PROGRESS',
-        revisionCount: ch.id % 2 === 0 ? 2 : 1,
+        status: ['MASTERED', 'REVISED', 'IN_PROGRESS', 'NOT_STARTED'][sampleRevisions.indexOf(ch) % 4],
+        revisionCount: sampleRevisions.indexOf(ch) % 2 === 0 ? 2 : 1,
         lastRevisedAt: new Date(),
       },
     });
@@ -261,6 +315,12 @@ async function main() {
       content: 'Full syllabus mock tests are now available. Complete 2 mocks this week to stay on track.',
     },
   });
+
+  const paperEntries = copyPapersAndBuildSeed();
+  for (const p of paperEntries) {
+    await prisma.examPaper.create({ data: p });
+  }
+  console.log(`Seeded ${paperEntries.length} EAPCET previous papers`);
 
   console.log('Seeding completed!');
   console.log('Admin: admin@dailymission.com / admin123');

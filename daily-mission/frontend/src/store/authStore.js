@@ -1,27 +1,42 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-export const useAuthStore = create((set) => ({
-  user: JSON.parse(localStorage.getItem('user') || 'null'),
-  token: localStorage.getItem('token') || null,
-  isAuthenticated: !!localStorage.getItem('token'),
+export const useAuthStore = create(
+  persist(
+    (set, get) => ({
+      user: null,
+      token: null,
+      refreshToken: null,
+      isAuthenticated: false,
 
-  login: (userData, token) => {
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('token', token);
-    set({ user: userData, token, isAuthenticated: true });
-  },
+      login: (userData, token, refreshToken) => {
+        set({ user: userData, token, refreshToken, isAuthenticated: true });
+      },
 
-  updateUser: (updates) => {
-    set((state) => {
-      const user = { ...state.user, ...updates };
-      localStorage.setItem('user', JSON.stringify(user));
-      return { user };
-    });
-  },
+      setTokens: (token, refreshToken) => {
+        set({ token, refreshToken });
+      },
 
-  logout: () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    set({ user: null, token: null, isAuthenticated: false });
-  },
-}));
+      updateUser: (updates) => {
+        set((state) => ({
+          user: state.user ? { ...state.user, ...updates } : updates,
+        }));
+      },
+
+      logout: () => {
+        set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
+      },
+
+      getRefreshToken: () => get().refreshToken,
+    }),
+    {
+      name: 'daily-mission-auth',
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        refreshToken: state.refreshToken,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    }
+  )
+);

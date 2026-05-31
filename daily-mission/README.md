@@ -1,24 +1,28 @@
-# Daily Mission - AI-Powered Education Platform
+# BioNEET Daily Mission
 
-Production-quality BiPC preparation platform for **NEET** and **EAPCET** (AP/TS students).
+AI-powered BiPC preparation platform for **NEET** and **EAPCET** (AP/TS students).
 
 ## Tech Stack
 - **Frontend:** React, Vite, TailwindCSS v4, Framer Motion, Recharts, Zustand
 - **Backend:** Node.js, Express, Prisma ORM
-- **Database:** SQLite (local) / PostgreSQL (production via Render)
-- **AI:** LangChain-style chains via Ollama + Mistral (with smart fallback)
+- **Database:** PostgreSQL
+- **AI:** Groq API (server-side only — key never exposed to frontend)
 
 ## Quick Start
 
-### 1. Install dependencies
-```bash
-npm run install:all
+### 1. Start PostgreSQL
+```powershell
+# From daily-mission folder — requires Docker Desktop running
+docker compose up -d
 ```
 
-### 2. Backend setup
-```bash
+Or use a hosted PostgreSQL (Neon, Supabase, Render) and set `DATABASE_URL` in `backend/.env`.
+
+### 2. Install & seed
+```powershell
+npm run install:all
 cd backend
-cp .env.example .env   # set DATABASE_URL and JWT_SECRET
+cp .env.example .env   # set DATABASE_URL, JWT_SECRET, GROQ_API_KEY
 npm run db:push
 npm run db:seed
 npm run dev
@@ -28,48 +32,42 @@ npm run dev
 - Student: `student@dailymission.com` / `student123`
 - Admin: `admin@dailymission.com` / `admin123`
 
-### 3. Frontend setup
-```bash
+### 3. Frontend
+```powershell
 cd frontend
-cp .env.example .env
+cp .env.example .env   # VITE_API_URL=http://localhost:5000
 npm run dev
 ```
 
-Open http://localhost:5173
+Open http://localhost:5173 — public BioNEET landing page; login for dashboard.
 
-### 4. AI (optional)
-Install [Ollama](https://ollama.ai) and run:
-```bash
-ollama pull mistral
-```
-Set in `backend/.env`:
-```
-OLLAMA_URL=http://localhost:11434
-OLLAMA_MODEL=mistral
-```
+### 4. EAPCET papers
+Place papers in `Documents/eapcet papers/` (AP/TS folders). Seed copies them to `frontend/public/papers/` and creates DB entries.
 
 ## Features
-- **Real analytics dashboard** — stats from MCQ attempts, study sessions, mock scores
-- **AI Study Planner** — daily missions, weekly schedule, weak-topic focus
-- **Notes, MCQs, Mock Tests** — full REST APIs with seeded BiPC content
-- **Revision Tracker** — chapter completion, weak marking, streaks
-- **Formula Hub, Diagrams, Handbook**
-- **AI Quiz Generator**
-- **Admin Panel** — user & content stats
+- **Public landing** — hero, features, papers preview, testimonials, pricing, FAQ
+- **JWT + refresh tokens** — session persists after browser close
+- **Google Login** — set `GOOGLE_CLIENT_ID` (backend) + `VITE_GOOGLE_CLIENT_ID` (frontend)
+- **Forgot / reset password**
+- **Notes CRUD** — 88 chapter notes + personal notes (auth required)
+- **Revision tracker** — Not Started / In Progress / Revised / Mastered
+- **Previous EAPCET papers** — AP & TS, view & download
+- **BioNEET AI chatbot** — Groq-powered NEET/EAPCET tutor
+- **AI Study Planner & Quiz Generator**
 
-## API Overview
+## API (auth required unless noted)
 | Endpoint | Description |
 |----------|-------------|
-| `GET /api/dashboard/dashboard` | Real dashboard stats (auth) |
-| `GET /api/dashboard/analytics` | Full analytics + charts data |
-| `GET /api/notes` | Chapter-wise notes |
-| `GET /api/mcqs` | MCQ bank |
-| `POST /api/mcqs/:id/attempt` | Submit answer (tracks analytics) |
-| `POST /api/ai/study-plan` | Generate AI study plan |
-| `POST /api/ai/quiz` | Generate AI quiz |
-| `GET /api/mock-tests` | Mock test list |
+| `GET /api/health` | Health + DB status (public) |
+| `POST /api/auth/login` | Login → JWT + refresh token |
+| `POST /api/auth/refresh` | Refresh access token |
+| `POST /api/auth/google` | Google OAuth login |
+| `GET /api/notes` | Notes (shared + personal) |
 | `GET /api/revisions` | Revision tracker |
+| `GET /api/papers` | Previous EAPCET papers |
+| `POST /api/chat` | AI chatbot |
 
 ## Deploy
-- **Frontend:** Vercel (root: `daily-mission`, output: `frontend/dist`)
-- **Backend:** Render (`backend/render.yaml`)
+- **Frontend:** Vercel — Root Directory: `daily-mission`, build: `cd frontend && npm run build`, output: `frontend/dist`
+- **Backend:** Render (`backend/render.yaml`) with PostgreSQL
+- Set env: `DATABASE_URL`, `JWT_SECRET`, `GROQ_API_KEY`, `FRONTEND_URL`, `GOOGLE_CLIENT_ID`
