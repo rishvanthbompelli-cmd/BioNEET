@@ -232,12 +232,16 @@ async function main() {
     { title: 'EAPCET BiPC Rapid Mock', mode: 'EAPCET', durationMinutes: 90, totalQuestions: 5, questionsJson: JSON.stringify(mockQuestions) },
     { title: 'Botany Chapter Test', mode: 'NEET', durationMinutes: 45, subject: 'Botany', totalQuestions: 3, questionsJson: JSON.stringify(mockQuestions.filter((q) => q.subject === 'Botany')) },
   ];
-  for (const t of mockTests) await prisma.mockTest.create({ data: t });
+  const mockTestIds = [];
+  for (const t of mockTests) {
+    const created = await prisma.mockTest.create({ data: t });
+    mockTestIds.push(created.id);
+  }
 
   await prisma.mockScore.create({
     data: {
       userId: student.id,
-      mockTestId: 1,
+      mockTestId: mockTestIds[0],
       score: 4,
       totalQuestions: 5,
       timeTakenMinutes: 165,

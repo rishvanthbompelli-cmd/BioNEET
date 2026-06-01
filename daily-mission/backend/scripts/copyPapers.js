@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 const PAPERS_SOURCE = process.env.EAPCET_PAPERS_PATH
-  || path.resolve(__dirname, '../../../../eapcet papers');
-const PAPERS_DEST = path.resolve(__dirname, '../../../frontend/public/papers');
+  || 'C:\\Users\\rishv\\OneDrive\\Documents\\eapcet papers';
+const PAPERS_DEST = path.resolve(__dirname, '../../frontend/public/papers');
 
 function parsePaperMeta(relativePath, fileName) {
   const parts = relativePath.split(path.sep).filter(Boolean);
