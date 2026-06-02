@@ -7,13 +7,18 @@ datasource db {
   url      = "file:./dev.db"
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
   id           Int      @id @default(autoincrement())
   email        String   @unique
   name         String
   password     String?
   googleId     String?  @unique
-  role         String   @default("STUDENT")
+  role         Role     @default(USER)
   streak       Int      @default(0)
   examMode     String?  @default("NEET")
   dailyHours   Int      @default(4)
