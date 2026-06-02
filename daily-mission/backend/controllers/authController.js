@@ -32,7 +32,7 @@ const registerUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword, role: 'STUDENT' },
+      data: { name, email, password: hashedPassword, role: 'USER' },
     });
 
     const { accessToken, refreshToken } = await createTokenPair(user);
@@ -151,7 +151,7 @@ const googleLogin = async (req, res) => {
           name: name || email.split('@')[0],
           email: email.toLowerCase(),
           googleId,
-          role: 'STUDENT',
+          role: 'USER',
         },
       });
     }

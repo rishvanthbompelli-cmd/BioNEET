@@ -58,7 +58,7 @@ async function main() {
       email: 'student@dailymission.com',
       name: 'BiPC Aspirant',
       password: studentPassword,
-      role: 'STUDENT',
+      role: 'USER',
       streak: 7,
       examMode: 'NEET',
       dailyHours: 5,

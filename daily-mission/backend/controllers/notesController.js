@@ -61,7 +61,7 @@ const createNote = async (req, res) => {
         memoryTrick: memoryTrick ? sanitizeString(memoryTrick, 500) : null,
         chapterId: chapterId ? parseInt(chapterId, 10) : null,
         userId: req.user.userId,
-        isShared: req.user.role === 'ADMIN' && req.body.isShared === true,
+        isShared: req.user.role === 'ADMIN' ? true : (req.body.isShared === true),
       },
       include: { chapter: { select: { name: true } } },
     });

@@ -142,3 +142,10 @@ export const adminApi = {
   getUsers: () => api.get('/admin/users'),
   getAnnouncements: () => api.get('/admin/announcements'),
 };
+
+export const documentApi = {
+  getAll: (params) => api.get('/documents', { params }),
+  create: (data) => api.post('/documents', data),
+  update: (id, data) => api.put(`/documents/${id}`, data),
+  delete: (id) => api.delete(`/documents/${id}`),
+};

@@ -1,13 +1,21 @@
 const express = require('express');
 const cors = require('cors');
 
-// 1. IMPORT YOUR ACTUAL ROUTE FILES HERE
-const authRoutes = require('./routes/authRoutes'); // Make sure this path matches your project structure!
-const paperRoutes = require('./routes/paperRoutes'); // Import your papers filters route too
+const authRoutes = require('./routes/authRoutes');
+const paperRoutes = require('./routes/papersRoutes');
+const documentRoutes = require('./routes/documentRoutes');
+const notesRoutes = require('./routes/notesRoutes');
+const mcqRoutes = require('./routes/mcqRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const aiRoutes = require('./routes/aiRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+const contentRoutes = require('./routes/contentRoutes');
+const revisionRoutes = require('./routes/revisionRoutes');
+const mockTestRoutes = require('./routes/mockTestRoutes');
 
 const app = express();
 
-// Advanced Dynamic CORS Configuration (Leave this exactly as it is)
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin) return callback(null, true);
@@ -24,9 +32,18 @@ app.use(cors({
 
 app.use(express.json());
 
-// 2. LINK THE ROUTES TO THE EXPRESS APP HERE
-app.use('/api/auth', authRoutes);      // Links /api/auth/register
-app.use('/api/papers', paperRoutes);  // Links /api/papers/filters
+app.use('/api/auth', authRoutes);
+app.use('/api/papers', paperRoutes);
+app.use('/api/documents', documentRoutes);
+app.use('/api/notes', notesRoutes);
+app.use('/api/mcqs', mcqRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/content', contentRoutes);
+app.use('/api/revisions', revisionRoutes);
+app.use('/api/mock-tests', mockTestRoutes);
 
 app.get('/', (req, res) => {
     res.send('BioNEET Backend Server is Running Perfectly!');

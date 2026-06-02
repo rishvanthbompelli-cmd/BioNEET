@@ -1,11 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { LogOut, User as UserIcon } from 'lucide-react';
+import { LogOut, User as UserIcon, Shield } from 'lucide-react';
 
 export default function Navbar({ onLogout }) {
   const { user, isAuthenticated } = useAuthStore();
   const logout = onLogout || useAuthStore.getState().logout;
+  const isAdmin = user?.role === 'ADMIN';
 
   return (
     <nav className="glass-panel sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
@@ -23,6 +24,14 @@ export default function Navbar({ onLogout }) {
             <div className="bg-primary-500/20 text-primary-400 px-3 py-1 rounded-full text-sm font-semibold border border-primary-500/30">
               🔥 {user?.streak || 0}
             </div>
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="flex items-center gap-2 bg-accent-500/20 text-accent-300 px-3 py-1.5 rounded-full text-sm font-semibold border border-accent-500/30 hover:bg-accent-500/30 transition-colors"
+              >
+                <Shield size={16} /> Admin
+              </Link>
+            )}
             <button
               onClick={logout}
               className="text-slate-400 hover:text-red-400 transition-colors ml-4"
