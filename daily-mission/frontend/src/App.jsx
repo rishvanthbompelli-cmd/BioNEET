@@ -19,6 +19,7 @@ import Handbook from './pages/Handbook';
 import RevisionTracker from './pages/RevisionTracker';
 import PreviousPapers from './pages/PreviousPapers';
 import AdminPanel from './pages/AdminPanel';
+import NotFound from './pages/NotFound';
 import { useAuthStore } from './store/authStore';
 import { authApi } from './lib/api';
 import LoadingState from './components/LoadingState';
@@ -106,7 +107,7 @@ function AppLayout() {
             <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
             <Route path="/settings" element={<Navigate to="/planner" replace />} />
 
-            <Route path="*" element={<Navigate to={isAuthenticated ? '/dashboard' : '/'} replace />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
       </div>

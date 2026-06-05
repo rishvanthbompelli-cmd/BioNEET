@@ -60,6 +60,15 @@ app.get('/', (req, res) => {
   res.send('BioNEET Backend Server is Running!');
 });
 
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled Error:', err);
+  res.status(err.status || 500).json({
+    status: 'error',
+    message: err.message || 'Internal Server Error'
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`BioNEET server running on port ${PORT}`);
