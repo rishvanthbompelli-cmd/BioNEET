@@ -3,12 +3,14 @@ import { NavLink } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import {
   LayoutDashboard, BookOpen, PenTool, LayoutTemplate, FlaskConical,
-  Target, Award, Brain, Image, BookMarked, RotateCcw, Shield, FileText,
+  Target, Award, Brain, Image, BookMarked, RotateCcw, Shield, FileText, GraduationCap
 } from 'lucide-react';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Brain, label: 'AI Planner', path: '/planner' },
+  { icon: Target, label: 'NEET Rank', path: '/rank-predictor-neet' },
+  { icon: GraduationCap, label: 'EAPCET Rank', path: '/rank-predictor-eapcet' },
   { icon: BookOpen, label: 'Notes', path: '/notes' },
   { icon: LayoutTemplate, label: 'Mock Tests', path: '/mock-tests' },
   { icon: RotateCcw, label: 'Revision', path: '/revision' },

@@ -1,28 +1,33 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import ChatBot from './components/ChatBot';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import Landing from './pages/Landing';
-import Dashboard from './pages/Dashboard';
-import Notes from './pages/Notes';
-import Analytics from './pages/Analytics';
-import AIPlanner from './pages/AIPlanner';
-import MockTests from './pages/MockTests';
-import Formulas from './pages/Formulas';
-import Diagrams from './pages/Diagrams';
-import Handbook from './pages/Handbook';
-import RevisionTracker from './pages/RevisionTracker';
-import PreviousPapers from './pages/PreviousPapers';
-import AdminPanel from './pages/AdminPanel';
-import NotFound from './pages/NotFound';
+import LoadingState from './components/LoadingState';
+import PageTransition from './components/PageTransition';
 import { useAuthStore } from './store/authStore';
 import { authApi } from './lib/api';
-import LoadingState from './components/LoadingState';
+
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const Landing = lazy(() => import('./pages/Landing'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Notes = lazy(() => import('./pages/Notes'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const AIPlanner = lazy(() => import('./pages/AIPlanner'));
+const MockTests = lazy(() => import('./pages/MockTests'));
+const Formulas = lazy(() => import('./pages/Formulas'));
+const Diagrams = lazy(() => import('./pages/Diagrams'));
+const Handbook = lazy(() => import('./pages/Handbook'));
+const RevisionTracker = lazy(() => import('./pages/RevisionTracker'));
+const PreviousPapers = lazy(() => import('./pages/PreviousPapers'));
+const AdminPanel = lazy(() => import('./pages/AdminPanel'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+const RankPredictorNEET = lazy(() => import('./pages/RankPredictorNEET'));
+const RankPredictorEAPCET = lazy(() => import('./pages/RankPredictorEAPCET'));
 
 const PUBLIC_PATHS = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
 
@@ -32,6 +37,40 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   if (adminOnly && !user?.isAdmin) return <Navigate to="/dashboard" replace />;
   return children;
 };
+
+function AnimatedRoutes() {
+  const location = useLocation();
+  const { isAuthenticated } = useAuthStore();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<PageTransition>{isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />}</PageTransition>} />
+        <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+        <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
+        <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
+        <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
+
+        <Route path="/dashboard" element={<ProtectedRoute><PageTransition><Dashboard /></PageTransition></ProtectedRoute>} />
+        <Route path="/notes" element={<ProtectedRoute><PageTransition><Notes /></PageTransition></ProtectedRoute>} />
+        <Route path="/analytics" element={<ProtectedRoute><PageTransition><Analytics /></PageTransition></ProtectedRoute>} />
+        <Route path="/planner" element={<ProtectedRoute><PageTransition><AIPlanner /></PageTransition></ProtectedRoute>} />
+        <Route path="/mock-tests" element={<ProtectedRoute><PageTransition><MockTests /></PageTransition></ProtectedRoute>} />
+        <Route path="/papers" element={<ProtectedRoute><PageTransition><PreviousPapers /></PageTransition></ProtectedRoute>} />
+        <Route path="/formulas" element={<ProtectedRoute><PageTransition><Formulas /></PageTransition></ProtectedRoute>} />
+        <Route path="/diagrams" element={<ProtectedRoute><PageTransition><Diagrams /></PageTransition></ProtectedRoute>} />
+        <Route path="/handbook" element={<ProtectedRoute><PageTransition><Handbook /></PageTransition></ProtectedRoute>} />
+        <Route path="/revision" element={<ProtectedRoute><PageTransition><RevisionTracker /></PageTransition></ProtectedRoute>} />
+        <Route path="/rank-predictor-neet" element={<ProtectedRoute><RankPredictorNEET /></ProtectedRoute>} />
+        <Route path="/rank-predictor-eapcet" element={<ProtectedRoute><RankPredictorEAPCET /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute adminOnly><PageTransition><AdminPanel /></PageTransition></ProtectedRoute>} />
+        <Route path="/settings" element={<Navigate to="/planner" replace />} />
+
+        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
 
 function AppLayout() {
   const { isAuthenticated, logout, token, refreshToken, updateUser } = useAuthStore();
@@ -87,28 +126,13 @@ function AppLayout() {
       <div className="flex flex-1">
         {showNav && <Sidebar />}
         <main className={`flex-1 p-4 md:p-6 overflow-y-auto ${showNav ? 'pb-nav' : ''} ${isAuthForm ? 'flex items-center justify-center' : ''}`}>
-          <Routes>
-            <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
-            <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-            <Route path="/planner" element={<ProtectedRoute><AIPlanner /></ProtectedRoute>} />
-            <Route path="/mock-tests" element={<ProtectedRoute><MockTests /></ProtectedRoute>} />
-            <Route path="/papers" element={<ProtectedRoute><PreviousPapers /></ProtectedRoute>} />
-            <Route path="/formulas" element={<ProtectedRoute><Formulas /></ProtectedRoute>} />
-            <Route path="/diagrams" element={<ProtectedRoute><Diagrams /></ProtectedRoute>} />
-            <Route path="/handbook" element={<ProtectedRoute><Handbook /></ProtectedRoute>} />
-            <Route path="/revision" element={<ProtectedRoute><RevisionTracker /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
-            <Route path="/settings" element={<Navigate to="/planner" replace />} />
-
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={
+            <div className="w-full h-full flex items-center justify-center">
+              <LoadingState message="Loading..." />
+            </div>
+          }>
+            <AnimatedRoutes />
+          </Suspense>
         </main>
       </div>
       {showNav && <ChatBot />}

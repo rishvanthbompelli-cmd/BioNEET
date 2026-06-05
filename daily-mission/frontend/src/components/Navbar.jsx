@@ -1,11 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { LogOut, User as UserIcon, Shield, Menu, X, LayoutDashboard, BookOpen, LayoutTemplate, RotateCcw, FileText, FlaskConical, Image as ImageIcon, BookMarked, Award, Brain } from 'lucide-react';
+import { LogOut, User as UserIcon, Shield, Menu, X, LayoutDashboard, BookOpen, LayoutTemplate, RotateCcw, FileText, FlaskConical, Image as ImageIcon, BookMarked, Award, Brain, Target, GraduationCap } from 'lucide-react';
 
 const mobileNavItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Brain, label: 'AI Planner', path: '/planner' },
+  { icon: Target, label: 'NEET Rank', path: '/rank-predictor-neet' },
+  { icon: GraduationCap, label: 'EAPCET Rank', path: '/rank-predictor-eapcet' },
   { icon: BookOpen, label: 'Notes', path: '/notes' },
   { icon: LayoutTemplate, label: 'Mock Tests', path: '/mock-tests' },
   { icon: RotateCcw, label: 'Revision', path: '/revision' },
