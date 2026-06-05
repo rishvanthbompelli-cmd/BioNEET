@@ -12,6 +12,10 @@ export default function AdminPanel() {
   const [stats, setStats] = useState(null);
   const [notes, setNotes] = useState([]);
   const [papers, setPapers] = useState([]);
+  const [mockTests, setMockTests] = useState([]);
+  const [formulas, setFormulas] = useState([]);
+  const [diagrams, setDiagrams] = useState([]);
+  const [handbooks, setHandbooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -37,14 +41,24 @@ export default function AdminPanel() {
     setLoading(true);
     setError('');
     try {
-      const [statsRes, notesRes, papersRes] = await Promise.all([
+      const [statsRes, notesRes, papersRes, mockRes, formulaRes, diagramRes, handbookRes] = await Promise.all([
         adminApi.getDashboardStats(),
         notesApi.getAll({ isShared: true }),
-        papersApi.getAll()
+        papersApi.getAll(),
+        adminApi.getMockTests ? adminApi.getMockTests() : { data: [] }, // We need these in api.js, wait I can use existing APIs
+        // Actually, I'll just use the public APIs since admin needs to see them anyway
+        fetch('/api/mock-tests').then(r=>r.json()).catch(()=>[]),
+        fetch('/api/content/formulas').then(r=>r.json()).catch(()=>[]),
+        fetch('/api/content/diagrams').then(r=>r.json()).catch(()=>[]),
+        fetch('/api/content/handbooks').then(r=>r.json()).catch(()=>[])
       ]);
       setStats(statsRes.data);
       setNotes(notesRes.data?.notes || notesRes.data || []);
       setPapers(papersRes.data?.papers || papersRes.data || []);
+      setMockTests(mockRes.data || mockRes || []);
+      setFormulas(formulaRes.data || formulaRes || []);
+      setDiagrams(diagramRes.data || diagramRes || []);
+      setHandbooks(handbookRes.data || handbookRes || []);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load admin data.');
     } finally {
@@ -55,15 +69,33 @@ export default function AdminPanel() {
   useEffect(() => { loadData(); }, []);
 
   const handleDelete = async () => {
+    const { type, id } = deleteModal;
+    setDeleteModal({ open: false, type: '', id: null, label: '' });
+
+    // Optimistic UI update
+    if (type === 'user') setStats(prev => ({ ...prev, users: prev.users.filter(u => u.id !== id) }));
+    if (type === 'note') setNotes(prev => prev.filter(n => n.id !== id));
+    if (type === 'paper') setPapers(prev => prev.filter(p => p.id !== id));
+    if (type === 'mock') setMockTests(prev => prev.filter(m => m.id !== id));
+    if (type === 'formula') setFormulas(prev => prev.filter(f => f.id !== id));
+    if (type === 'diagram') setDiagrams(prev => prev.filter(d => d.id !== id));
+    if (type === 'handbook') setHandbooks(prev => prev.filter(h => h.id !== id));
+    if (type === 'purge') { setPapers([]); setDiagrams([]); setNotes([]); }
+
     try {
-      if (deleteModal.type === 'user') await adminApi.deleteUser(deleteModal.id);
-      if (deleteModal.type === 'note') await adminApi.deleteNote(deleteModal.id);
-      if (deleteModal.type === 'paper') await adminApi.deletePaper(deleteModal.id);
-      setSuccess(`${deleteModal.type} deleted successfully`);
-      setDeleteModal({ open: false, type: '', id: null, label: '' });
-      loadData();
+      if (type === 'user') await adminApi.deleteUser(id);
+      if (type === 'note') await adminApi.deleteNote(id);
+      if (type === 'paper') await adminApi.deletePaper(id);
+      if (type === 'mock') await adminApi.deleteMockTest(id);
+      if (type === 'formula') await adminApi.deleteFormula(id);
+      if (type === 'diagram') await adminApi.deleteDiagram(id);
+      if (type === 'handbook') await adminApi.deleteHandbook(id);
+      if (type === 'purge') await adminApi.purgeData();
+      setSuccess(`${type} deleted successfully`);
     } catch (err) {
-      setError(`Failed to delete ${deleteModal.type}`);
+      setError(`Failed to delete ${type}`);
+      // Revert optimistic update by reloading data
+      loadData();
     }
   };
 
@@ -133,7 +165,7 @@ export default function AdminPanel() {
 
       {/* Tabs */}
       <div className="flex overflow-x-auto custom-scrollbar gap-2 pb-2">
-        {['dashboard', 'users', 'notes', 'papers', 'uploads'].map(tab => (
+        {['dashboard', 'users', 'notes', 'papers', 'resources', 'uploads'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -165,6 +197,13 @@ export default function AdminPanel() {
             <LayoutDashboard className="mx-auto text-accent-400 mb-2" size={28} />
             <div className="text-xl font-bold text-white mt-3">Overview</div>
             <div className="text-sm text-slate-400 mt-1">All Systems Active</div>
+          </div>
+          <div className="glass-card p-6 text-center lg:col-span-4 mt-4">
+             <button onClick={() => setDeleteModal({ open: true, type: 'purge', id: null, label: 'ALL Exam Papers, Diagrams, and Notes' })} className="bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30 font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 mx-auto">
+               <AlertCircle size={20} />
+               Purge Stale Data
+             </button>
+             <p className="text-slate-500 text-xs mt-2">Permanently deletes all entries in ExamPaper, Diagram, and Note tables.</p>
           </div>
         </div>
       )}
@@ -266,6 +305,134 @@ export default function AdminPanel() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'resources' && (
+        <div className="space-y-6">
+          <div className="glass-panel p-6 rounded-2xl overflow-hidden">
+            <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+              <Plus size={18} className="text-purple-400" />
+              Mock Tests
+            </h3>
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-slate-400 border-b border-white/10">
+                    <th className="text-left py-3 px-2">Title</th>
+                    <th className="text-left py-3 px-2">Questions</th>
+                    <th className="text-right py-3 px-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mockTests.map((m) => (
+                    <tr key={m.id} className="border-b border-white/5 text-slate-300 hover:bg-white/5">
+                      <td className="py-3 px-2">{m.title}</td>
+                      <td className="py-3 px-2">{m.totalQuestions}</td>
+                      <td className="py-3 px-2 text-right">
+                        <button onClick={() => setDeleteModal({ open: true, type: 'mock', id: m.id, label: `Mock: ${m.title}` })} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="glass-panel p-6 rounded-2xl overflow-hidden">
+            <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+              <Plus size={18} className="text-pink-400" />
+              Formulas
+            </h3>
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-slate-400 border-b border-white/10">
+                    <th className="text-left py-3 px-2">Expression</th>
+                    <th className="text-left py-3 px-2">Subject</th>
+                    <th className="text-right py-3 px-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {formulas.map((f) => (
+                    <tr key={f.id} className="border-b border-white/5 text-slate-300 hover:bg-white/5">
+                      <td className="py-3 px-2">{f.expression}</td>
+                      <td className="py-3 px-2">{f.subject}</td>
+                      <td className="py-3 px-2 text-right">
+                        <button onClick={() => setDeleteModal({ open: true, type: 'formula', id: f.id, label: `Formula: ${f.expression}` })} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="glass-panel p-6 rounded-2xl overflow-hidden">
+            <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+              <Plus size={18} className="text-cyan-400" />
+              Diagrams
+            </h3>
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-slate-400 border-b border-white/10">
+                    <th className="text-left py-3 px-2">Title</th>
+                    <th className="text-left py-3 px-2">Category</th>
+                    <th className="text-right py-3 px-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {diagrams.map((d) => (
+                    <tr key={d.id} className="border-b border-white/5 text-slate-300 hover:bg-white/5">
+                      <td className="py-3 px-2">{d.title}</td>
+                      <td className="py-3 px-2">{d.category}</td>
+                      <td className="py-3 px-2 text-right">
+                        <button onClick={() => setDeleteModal({ open: true, type: 'diagram', id: d.id, label: `Diagram: ${d.title}` })} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="glass-panel p-6 rounded-2xl overflow-hidden">
+            <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+              <Plus size={18} className="text-indigo-400" />
+              Handbooks
+            </h3>
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-slate-400 border-b border-white/10">
+                    <th className="text-left py-3 px-2">Title</th>
+                    <th className="text-left py-3 px-2">Subject</th>
+                    <th className="text-right py-3 px-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {handbooks.map((h) => (
+                    <tr key={h.id} className="border-b border-white/5 text-slate-300 hover:bg-white/5">
+                      <td className="py-3 px-2">{h.title}</td>
+                      <td className="py-3 px-2">{h.subject}</td>
+                      <td className="py-3 px-2 text-right">
+                        <button onClick={() => setDeleteModal({ open: true, type: 'handbook', id: h.id, label: `Handbook: ${h.title}` })} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

@@ -2,23 +2,27 @@ const prisma = require('../utils/prisma');
 
 const getMockTests = async (req, res) => {
   try {
-    const { mode } = req.query;
+    const { mode, page = 1, limit = 20 } = req.query;
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const take = parseInt(limit, 10);
+
     const tests = await prisma.mockTest.findMany({
       where: {
         isPublished: true,
         ...(mode ? { mode } : {}),
       },
+      select: {
+        id: true,
+        title: true,
+        mode: true,
+        durationMinutes: true,
+        subject: true,
+        totalQuestions: true,
+      },
+      skip,
+      take,
     });
-    res.json(
-      tests.map((t) => ({
-        id: t.id,
-        title: t.title,
-        mode: t.mode,
-        durationMinutes: t.durationMinutes,
-        subject: t.subject,
-        totalQuestions: t.totalQuestions,
-      }))
-    );
+    res.json(tests);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch mock tests' });
   }

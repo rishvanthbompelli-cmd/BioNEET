@@ -15,6 +15,11 @@ const {
   createFormula,
   createDiagram,
   createHandbook,
+  purgeData,
+  deleteMockTest,
+  deleteFormula,
+  deleteDiagram,
+  deleteHandbook,
 } = require('../controllers/adminController');
 const { authMiddleware, isAdmin } = require('../middleware/authMiddleware');
 
@@ -23,6 +28,8 @@ const router = express.Router();
 router.get('/announcements', getAnnouncements);
 
 router.use(authMiddleware, isAdmin);
+
+router.delete('/purge', purgeData);
 
 router.get('/dashboard-stats', getDashboardStats);
 router.get('/stats', getAdminStats);
@@ -39,5 +46,9 @@ router.post('/handbooks', createHandbook);
 router.delete('/users/:id', deleteUser);
 router.delete('/notes/:id', deleteNote);
 router.delete('/papers/:id', deletePaper);
+router.delete('/mocktests/:id', deleteMockTest);
+router.delete('/formulas/:id', deleteFormula);
+router.delete('/diagrams/:id', deleteDiagram);
+router.delete('/handbooks/:id', deleteHandbook);
 
 module.exports = router;

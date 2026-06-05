@@ -10,8 +10,6 @@ const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Brain, label: 'AI Planner', path: '/planner' },
   { icon: BookOpen, label: 'Notes', path: '/notes' },
-  { icon: Target, label: 'MCQs', path: '/mcqs' },
-  { icon: PenTool, label: 'Quiz Gen', path: '/quiz-gen' },
   { icon: LayoutTemplate, label: 'Mock Tests', path: '/mock-tests' },
   { icon: RotateCcw, label: 'Revision', path: '/revision' },
   { icon: FileText, label: 'Papers', path: '/papers' },

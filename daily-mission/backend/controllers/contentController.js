@@ -2,10 +2,26 @@ const prisma = require('../utils/prisma');
 
 const getFormulas = async (req, res) => {
   try {
-    const { subject } = req.query;
+    const { subject, page = 1, limit = 20 } = req.query;
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const take = parseInt(limit, 10);
+
     const formulas = await prisma.formula.findMany({
       where: subject && subject !== 'All' ? { subject } : {},
+      select: {
+        id: true,
+        chapter: true,
+        subject: true,
+        expression: true,
+        description: true,
+        title: true,
+        category: true,
+        shortcut: true,
+        imageUrl: true,
+      },
       orderBy: { subject: 'asc' },
+      skip,
+      take,
     });
     res.json(formulas);
   } catch (error) {
@@ -15,9 +31,22 @@ const getFormulas = async (req, res) => {
 
 const getDiagrams = async (req, res) => {
   try {
-    const { subject } = req.query;
+    const { subject, page = 1, limit = 20 } = req.query;
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const take = parseInt(limit, 10);
+
     const diagrams = await prisma.diagram.findMany({
       where: subject && subject !== 'All' ? { subject } : {},
+      select: {
+        id: true,
+        title: true,
+        category: true,
+        imageUrl: true,
+        labels: true,
+        subject: true,
+      },
+      skip,
+      take,
     });
     res.json(
       diagrams.map((d) => ({
@@ -32,7 +61,23 @@ const getDiagrams = async (req, res) => {
 
 const getHandbooks = async (req, res) => {
   try {
-    const handbooks = await prisma.handbook.findMany({ orderBy: { subject: 'asc' } });
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const take = parseInt(limit, 10);
+
+    const handbooks = await prisma.handbook.findMany({ 
+      select: {
+        id: true,
+        title: true,
+        subject: true,
+        fileUrl: true,
+        category: true,
+        content: true,
+      },
+      orderBy: { subject: 'asc' },
+      skip,
+      take,
+    });
     res.json(handbooks);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch handbooks' });

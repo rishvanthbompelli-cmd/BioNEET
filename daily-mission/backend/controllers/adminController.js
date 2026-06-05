@@ -163,6 +163,20 @@ const deletePaper = async (req, res) => {
   }
 };
 
+const purgeData = async (req, res) => {
+  try {
+    const [papers, diagrams, notes] = await Promise.all([
+      prisma.examPaper.deleteMany({}),
+      prisma.diagram.deleteMany({}),
+      prisma.note.deleteMany({}),
+    ]);
+    res.json({ message: 'Data purged successfully', purged: { papers: papers.count, diagrams: diagrams.count, notes: notes.count } });
+  } catch (error) {
+    console.error('Purge error:', error);
+    res.status(500).json({ message: 'Failed to purge data' });
+  }
+};
+
 const createMockTest = async (req, res) => {
   try {
     const { title, durationMinutes, totalQuestions, instructions, fileUrl } = req.body;
@@ -247,6 +261,42 @@ const createHandbook = async (req, res) => {
   }
 };
 
+const deleteMockTest = async (req, res) => {
+  try {
+    await prisma.mockTest.delete({ where: { id: parseInt(req.params.id, 10) } });
+    res.json({ message: 'Mock test deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete mock test' });
+  }
+};
+
+const deleteFormula = async (req, res) => {
+  try {
+    await prisma.formula.delete({ where: { id: parseInt(req.params.id, 10) } });
+    res.json({ message: 'Formula deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete formula' });
+  }
+};
+
+const deleteDiagram = async (req, res) => {
+  try {
+    await prisma.diagram.delete({ where: { id: parseInt(req.params.id, 10) } });
+    res.json({ message: 'Diagram deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete diagram' });
+  }
+};
+
+const deleteHandbook = async (req, res) => {
+  try {
+    await prisma.handbook.delete({ where: { id: parseInt(req.params.id, 10) } });
+    res.json({ message: 'Handbook deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete handbook' });
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getAdminStats,
@@ -263,4 +313,9 @@ module.exports = {
   createFormula,
   createDiagram,
   createHandbook,
+  purgeData,
+  deleteMockTest,
+  deleteFormula,
+  deleteDiagram,
+  deleteHandbook,
 };

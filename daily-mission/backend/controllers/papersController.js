@@ -2,14 +2,30 @@ const prisma = require('../utils/prisma');
 
 const getPapers = async (req, res) => {
   try {
-    const { state, year, subject } = req.query;
+    const { state, year, subject, page = 1, limit = 20 } = req.query;
+    
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const take = parseInt(limit, 10);
+
     const papers = await prisma.examPaper.findMany({
       where: {
         ...(state && state !== 'All' ? { state } : {}),
         ...(year ? { year: parseInt(year, 10) } : {}),
         ...(subject && subject !== 'All' ? { subject } : {}),
       },
+      select: {
+        id: true,
+        title: true,
+        state: true,
+        year: true,
+        subject: true,
+        shift: true,
+        fileUrl: true,
+        examType: true,
+      },
       orderBy: [{ state: 'asc' }, { year: 'desc' }, { sortOrder: 'asc' }],
+      skip,
+      take,
     });
     res.json(papers);
   } catch (error) {

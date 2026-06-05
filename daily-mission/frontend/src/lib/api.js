@@ -148,6 +148,11 @@ export const adminApi = {
   deleteUser: (id) => api.delete(`/admin/users/${id}`),
   deleteNote: (id) => api.delete(`/admin/notes/${id}`),
   deletePaper: (id) => api.delete(`/admin/papers/${id}`),
+  deleteMockTest: (id) => api.delete(`/admin/mocktests/${id}`),
+  deleteFormula: (id) => api.delete(`/admin/formulas/${id}`),
+  deleteDiagram: (id) => api.delete(`/admin/diagrams/${id}`),
+  deleteHandbook: (id) => api.delete(`/admin/handbooks/${id}`),
+  purgeData: () => api.delete('/admin/purge'),
   // Mocks for new resource forms
   createMockTest: (data) => api.post('/admin/mock-tests', data),
   createFormula: (data) => api.post('/admin/formulas', data),

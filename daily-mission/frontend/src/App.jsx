@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
-import BottomNav from './components/BottomNav';
 import ChatBot from './components/ChatBot';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -11,10 +10,8 @@ import ResetPassword from './pages/ResetPassword';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import Notes from './pages/Notes';
-import MCQs from './pages/MCQs';
 import Analytics from './pages/Analytics';
 import AIPlanner from './pages/AIPlanner';
-import QuizGenerator from './pages/QuizGenerator';
 import MockTests from './pages/MockTests';
 import Formulas from './pages/Formulas';
 import Diagrams from './pages/Diagrams';
@@ -98,10 +95,8 @@ function AppLayout() {
 
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
-            <Route path="/mcqs" element={<ProtectedRoute><MCQs /></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
             <Route path="/planner" element={<ProtectedRoute><AIPlanner /></ProtectedRoute>} />
-            <Route path="/quiz-gen" element={<ProtectedRoute><QuizGenerator /></ProtectedRoute>} />
             <Route path="/mock-tests" element={<ProtectedRoute><MockTests /></ProtectedRoute>} />
             <Route path="/papers" element={<ProtectedRoute><PreviousPapers /></ProtectedRoute>} />
             <Route path="/formulas" element={<ProtectedRoute><Formulas /></ProtectedRoute>} />
@@ -115,7 +110,6 @@ function AppLayout() {
           </Routes>
         </main>
       </div>
-      {showNav && <BottomNav />}
       {showNav && <ChatBot />}
     </div>
   );

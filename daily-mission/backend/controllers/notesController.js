@@ -3,8 +3,11 @@ const { sanitizeString, validateSubject } = require('../utils/validate');
 
 const getNotes = async (req, res) => {
   try {
-    const { subject, search } = req.query;
+    const { subject, search, page = 1, limit = 20 } = req.query;
     const userId = req.user.userId;
+
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const take = parseInt(limit, 10);
 
     const notes = await prisma.note.findMany({
       where: {
@@ -12,8 +15,18 @@ const getNotes = async (req, res) => {
         ...(subject && subject !== 'All' ? { subject } : {}),
         ...(search ? { title: { contains: search } } : {}),
       },
-      include: { chapter: { select: { name: true } } },
+      select: {
+        id: true,
+        title: true,
+        subject: true,
+        isShared: true,
+        isFavorite: true,
+        createdAt: true,
+        chapter: { select: { name: true } }
+      },
       orderBy: [{ isShared: 'desc' }, { createdAt: 'desc' }],
+      skip,
+      take,
     });
     res.json(notes);
   } catch (error) {

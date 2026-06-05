@@ -106,7 +106,7 @@ export default function Dashboard() {
             </ul>
           ) : (
             <p className="text-slate-500 text-sm py-8 text-center">
-              No activity yet. <Link to="/mcqs" className="text-primary-400">Practice MCQs</Link> or <Link to="/quiz-gen" className="text-primary-400">generate a quiz</Link> to start tracking.
+              No activity yet. <Link to="/mock-tests" className="text-primary-400">Take a mock test</Link> or study your <Link to="/notes" className="text-primary-400">notes</Link> to start tracking.
             </p>
           )}
         </div>
