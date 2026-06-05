@@ -9,7 +9,6 @@ import PageTransition from './components/PageTransition';
 import { useAuthStore } from './store/authStore';
 import { authApi } from './lib/api';
 
-// Lazy load all pages for code splitting & faster initial load
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -39,15 +38,6 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   return children;
 };
 
-// Minimal inline spinner for Suspense fallback (no extra component load)
-function SuspenseSpinner() {
-  return (
-    <div className="w-full min-h-[50vh] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
-    </div>
-  );
-}
-
 function AnimatedRoutes() {
   const location = useLocation();
   const { isAuthenticated } = useAuthStore();
@@ -71,8 +61,8 @@ function AnimatedRoutes() {
         <Route path="/diagrams" element={<ProtectedRoute><PageTransition><Diagrams /></PageTransition></ProtectedRoute>} />
         <Route path="/handbook" element={<ProtectedRoute><PageTransition><Handbook /></PageTransition></ProtectedRoute>} />
         <Route path="/revision" element={<ProtectedRoute><PageTransition><RevisionTracker /></PageTransition></ProtectedRoute>} />
-        <Route path="/rank-predictor-neet" element={<ProtectedRoute><PageTransition><RankPredictorNEET /></PageTransition></ProtectedRoute>} />
-        <Route path="/rank-predictor-eapcet" element={<ProtectedRoute><PageTransition><RankPredictorEAPCET /></PageTransition></ProtectedRoute>} />
+        <Route path="/rank-predictor-neet" element={<ProtectedRoute><RankPredictorNEET /></ProtectedRoute>} />
+        <Route path="/rank-predictor-eapcet" element={<ProtectedRoute><RankPredictorEAPCET /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute adminOnly><PageTransition><AdminPanel /></PageTransition></ProtectedRoute>} />
         <Route path="/settings" element={<Navigate to="/planner" replace />} />
 
@@ -115,7 +105,7 @@ function AppLayout() {
 
   if (booting) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <LoadingState message="Checking session..." />
       </div>
     );
@@ -130,13 +120,17 @@ function AppLayout() {
   }
 
   return (
-    <div className="flex flex-col min-h-[100dvh] relative">
+    <div className="flex flex-col min-h-screen relative overflow-hidden">
       <div className="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-dark-800 via-dark-900 to-black pointer-events-none" />
       {showNav && <Navbar onLogout={handleLogout} />}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1">
         {showNav && <Sidebar />}
-        <main className={`flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 pb-28 md:pb-6 ${isAuthForm ? 'flex items-center justify-center' : ''}`}>
-          <Suspense fallback={<SuspenseSpinner />}>
+        <main className={`flex-1 p-4 md:p-6 overflow-y-auto ${showNav ? 'pb-nav' : ''} ${isAuthForm ? 'flex items-center justify-center' : ''}`}>
+          <Suspense fallback={
+            <div className="w-full h-full flex items-center justify-center">
+              <LoadingState message="Loading..." />
+            </div>
+          }>
             <AnimatedRoutes />
           </Suspense>
         </main>
