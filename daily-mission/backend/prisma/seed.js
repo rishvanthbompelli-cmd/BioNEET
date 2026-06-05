@@ -28,14 +28,14 @@ async function main() {
   await prisma.refreshToken.deleteMany();
   await prisma.passwordReset.deleteMany();
 
-  const adminPassword = await bcrypt.hash('admin123', 10);
+  const adminPassword = await bcrypt.hash('241707', 10);
   const studentPassword = await bcrypt.hash('student123', 10);
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@dailymission.com' },
+    where: { email: 'bompellirishvanth@gmail.com' },
     update: { role: 'ADMIN', streak: 12 },
     create: {
-      email: 'admin@dailymission.com',
+      email: 'bompellirishvanth@gmail.com',
       name: 'Admin Instructor',
       password: adminPassword,
       role: 'ADMIN',
@@ -327,7 +327,7 @@ async function main() {
   console.log(`Seeded ${paperEntries.length} EAPCET previous papers`);
 
   console.log('Seeding completed!');
-  console.log('Admin: admin@dailymission.com / admin123');
+  console.log('Admin: bompellirishvanth@gmail.com / 241707');
   console.log('Student: student@dailymission.com / student123');
 }
 

@@ -122,40 +122,47 @@ model McqAttempt {
 }
 
 model Formula {
-  id       Int     @id @default(autoincrement())
-  subject  String
-  title    String
-  content  String
-  category String  @default("general")
-  shortcut String?
-  imageUrl String?
+  id          Int     @id @default(autoincrement())
+  chapter     String?
+  subject     String
+  expression  String?
+  description String?
+  title       String?
+  content     String?
+  category    String  @default("general")
+  shortcut    String?
+  imageUrl    String?
 }
 
 model Diagram {
   id       Int    @id @default(autoincrement())
-  subject  String
   title    String
+  category String @default("general")
   imageUrl String
   labels   String
-  category String @default("general")
+  subject  String?
 }
 
 model Handbook {
   id       Int    @id @default(autoincrement())
   title    String
   subject  String
-  category String
-  content  String
+  fileUrl  String?
+  category String?
+  content  String?
 }
 
 model MockTest {
   id              Int         @id @default(autoincrement())
   title           String
-  mode            String
   durationMinutes Int
-  subject         String?
   totalQuestions  Int
-  questionsJson   String
+  instructions    String?
+  fileUrl         String?
+  data            String?
+  mode            String?
+  subject         String?
+  questionsJson   String?
   isPublished     Boolean     @default(true)
   mockScores      MockScore[]
 }
@@ -256,6 +263,7 @@ model ChatMessage {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   role      String
   content   String
+  imageUrl  String?
   sessionId String   @default("default")
   createdAt DateTime @default(now())
 }

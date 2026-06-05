@@ -10,6 +10,16 @@ const {
   formatUser,
 } = require('../utils/tokenService');
 const { validateEmail, validatePassword, validateName, sanitizeString } = require('../utils/validate');
+const { resolveRole } = require('../utils/adminConfig');
+
+async function ensureCorrectRole(user) {
+  const correctRole = resolveRole(user.email);
+  if (user.role === correctRole) return user;
+  return prisma.user.update({
+    where: { id: user.id },
+    data: { role: correctRole },
+  });
+}
 
 const googleClient = process.env.GOOGLE_CLIENT_ID
   ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
@@ -32,7 +42,7 @@ const registerUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword, role: 'USER' },
+      data: { name, email, password: hashedPassword, role: resolveRole(email) },
     });
 
     const { accessToken, refreshToken } = await createTokenPair(user);
@@ -67,12 +77,13 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const { accessToken, refreshToken } = await createTokenPair(user);
+    const updatedUser = await ensureCorrectRole(user);
+    const { accessToken, refreshToken } = await createTokenPair(updatedUser);
     res.json({
       message: 'Login successful',
       token: accessToken,
       refreshToken,
-      user: formatUser(user),
+      user: formatUser(updatedUser),
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -138,20 +149,21 @@ const googleLogin = async (req, res) => {
       where: { OR: [{ googleId }, { email: email.toLowerCase() }] },
     });
 
+    const normalizedEmail = email.toLowerCase();
+
     if (user) {
-      if (!user.googleId) {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: { googleId },
-        });
+      const updates = { role: resolveRole(normalizedEmail) };
+      if (!user.googleId) updates.googleId = googleId;
+      if (user.role !== updates.role || !user.googleId) {
+        user = await prisma.user.update({ where: { id: user.id }, data: updates });
       }
     } else {
       user = await prisma.user.create({
         data: {
-          name: name || email.split('@')[0],
-          email: email.toLowerCase(),
+          name: name || normalizedEmail.split('@')[0],
+          email: normalizedEmail,
           googleId,
-          role: 'USER',
+          role: resolveRole(normalizedEmail),
         },
       });
     }
@@ -239,7 +251,7 @@ const getProfile = async (req, res) => {
       },
     });
     if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json(user);
+    res.json({ ...user, isAdmin: resolveRole(user.email) === 'ADMIN' });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }

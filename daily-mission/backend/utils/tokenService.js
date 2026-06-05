@@ -1,13 +1,14 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const prisma = require('./prisma');
+const { isAdminEmail } = require('./adminConfig');
 
 const ACCESS_EXPIRY = '15m';
 const REFRESH_DAYS = 30;
 
 function signAccessToken(user) {
   return jwt.sign(
-    { userId: user.id, role: user.role },
+    { userId: user.id, role: user.role, email: user.email },
     process.env.JWT_SECRET,
     { expiresIn: ACCESS_EXPIRY }
   );
@@ -58,6 +59,7 @@ function formatUser(user) {
     name: user.name,
     email: user.email,
     role: user.role,
+    isAdmin: isAdminEmail(user.email),
     streak: user.streak,
     examMode: user.examMode,
     dailyHours: user.dailyHours,

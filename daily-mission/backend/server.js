@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 
@@ -17,20 +19,29 @@ const mockTestRoutes = require('./routes/mockTestRoutes');
 const app = express();
 
 app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin) return callback(null, true);
-        if (origin.includes('localhost') || origin.includes('vercel.app')) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS policy'));
-        }
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+  origin(origin, callback) {
+    if (!origin || origin.includes('localhost') || origin.includes('vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS policy'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
 
 app.use(express.json());
+
+app.get('/api/health', async (req, res) => {
+  try {
+    const prisma = require('./utils/prisma');
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', message: 'BioNEET API running', database: 'connected' });
+  } catch {
+    res.status(503).json({ status: 'error', message: 'Database not connected', database: 'disconnected' });
+  }
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/papers', paperRoutes);
@@ -46,10 +57,10 @@ app.use('/api/revisions', revisionRoutes);
 app.use('/api/mock-tests', mockTestRoutes);
 
 app.get('/', (req, res) => {
-    res.send('BioNEET Backend Server is Running Perfectly!');
+  res.send('BioNEET Backend Server is Running!');
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Server is running smoothly on port ${PORT}`);
+  console.log(`BioNEET server running on port ${PORT}`);
 });

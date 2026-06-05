@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { isAdminEmail } = require('../utils/adminConfig');
 
 const authMiddleware = (req, res, next) => {
   const authHeader = req.header('Authorization');
@@ -10,19 +11,20 @@ const authMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { userId, role }
+    req.user = decoded;
     next();
   } catch (error) {
     res.status(401).json({ message: 'Token is not valid' });
   }
 };
 
-const adminMiddleware = (req, res, next) => {
-  if (req.user && req.user.role === 'ADMIN') {
-    next();
-  } else {
-    res.status(403).json({ message: 'Admin access required' });
+const isAdmin = (req, res, next) => {
+  if (!req.user?.email || !isAdminEmail(req.user.email)) {
+    return res.status(403).json({ message: 'Forbidden: Admin access restricted to authorized account only' });
   }
+  next();
 };
 
-module.exports = { authMiddleware, adminMiddleware };
+const adminMiddleware = isAdmin;
+
+module.exports = { authMiddleware, isAdmin, adminMiddleware };

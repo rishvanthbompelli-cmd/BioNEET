@@ -24,7 +24,7 @@ const navItems = [
 
 export default function Sidebar() {
   const { user } = useAuthStore();
-  const items = navItems.filter((item) => !item.adminOnly || user?.role === 'ADMIN');
+  const items = navItems.filter((item) => !item.adminOnly || user?.isAdmin);
 
   return (
     <aside className="w-64 hidden md:flex flex-col glass-panel h-[calc(100vh-73px)] sticky top-[73px] border-t-0 rounded-tr-none rounded-tl-none border-l-0 border-b-0 shrink-0">

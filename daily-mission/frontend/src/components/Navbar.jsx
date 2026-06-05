@@ -6,8 +6,6 @@ import { LogOut, User as UserIcon, Shield } from 'lucide-react';
 export default function Navbar({ onLogout }) {
   const { user, isAuthenticated } = useAuthStore();
   const logout = onLogout || useAuthStore.getState().logout;
-  const isAdmin = user?.role === 'ADMIN';
-
   return (
     <nav className="glass-panel sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
       <Link to={isAuthenticated ? '/dashboard' : '/'} className="group text-2xl font-bold text-gradient glow-effect">
@@ -24,12 +22,12 @@ export default function Navbar({ onLogout }) {
             <div className="bg-primary-500/20 text-primary-400 px-3 py-1 rounded-full text-sm font-semibold border border-primary-500/30">
               🔥 {user?.streak || 0}
             </div>
-            {isAdmin && (
+            {user?.isAdmin && (
               <Link
                 to="/admin"
                 className="flex items-center gap-2 bg-accent-500/20 text-accent-300 px-3 py-1.5 rounded-full text-sm font-semibold border border-accent-500/30 hover:bg-accent-500/30 transition-colors"
               >
-                <Shield size={16} /> Admin
+                <Shield size={16} /> Admin Panel
               </Link>
             )}
             <button

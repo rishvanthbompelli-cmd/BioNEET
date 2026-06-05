@@ -10,7 +10,7 @@ const getNotes = async (req, res) => {
       where: {
         OR: [{ isShared: true }, { userId }],
         ...(subject && subject !== 'All' ? { subject } : {}),
-        ...(search ? { title: { contains: search, mode: 'insensitive' } } : {}),
+        ...(search ? { title: { contains: search } } : {}),
       },
       include: { chapter: { select: { name: true } } },
       orderBy: [{ isShared: 'desc' }, { createdAt: 'desc' }],
@@ -61,7 +61,7 @@ const createNote = async (req, res) => {
         memoryTrick: memoryTrick ? sanitizeString(memoryTrick, 500) : null,
         chapterId: chapterId ? parseInt(chapterId, 10) : null,
         userId: req.user.userId,
-        isShared: req.user.role === 'ADMIN' ? true : (req.body.isShared === true),
+        isShared: false,
       },
       include: { chapter: { select: { name: true } } },
     });

@@ -3,7 +3,7 @@ const { generateStudyPlan, generateQuiz } = require('../services/aiService');
 
 const createStudyPlan = async (req, res) => {
   try {
-    const { examMode, dailyHours, weakSubjects, targetRank, completedChapters } = req.body;
+    const { examMode, dailyHours, weakSubjects, targetRank, completedChapters, totalDaysRemaining } = req.body;
 
     const plan = await generateStudyPlan({
       examMode: examMode || 'NEET',
@@ -11,6 +11,7 @@ const createStudyPlan = async (req, res) => {
       weakSubjects,
       targetRank,
       completedChapters,
+      totalDaysRemaining,
     });
 
     await prisma.user.update({
@@ -59,9 +60,9 @@ const getStudyPlans = async (req, res) => {
 
 const generateQuizHandler = async (req, res) => {
   try {
-    const { subject, chapter, topic, examMode, quizType = 'chapter' } = req.body;
+    const { subject, chapter, topic, examMode, quizType = 'chapter', scope } = req.body;
 
-    if (quizType === 'chapter' && (!subject || !chapter)) {
+    if (quizType === 'chapter' && (!subject || !chapter) && scope !== 'Full-Syllabus') {
       return res.status(400).json({ message: 'Subject and chapter are required for chapter quiz' });
     }
     if (quizType === 'subject' && !subject) {
@@ -73,7 +74,8 @@ const generateQuizHandler = async (req, res) => {
       subject: subject || 'Mixed',
       chapter,
       topic: topic || chapter || quizType,
-      examMode: quizType === 'eapcet_full' ? 'EAPCET' : quizType === 'neet_full' ? 'NEET' : examMode,
+      examMode: examMode || (quizType === 'eapcet_full' ? 'EAPCET' : quizType === 'neet_full' ? 'NEET' : 'NEET'),
+      scope,
     });
 
     const quiz = await prisma.quiz.create({
@@ -115,4 +117,32 @@ const getQuizzes = async (req, res) => {
   }
 };
 
-module.exports = { createStudyPlan, getStudyPlans, generateQuizHandler, getQuizzes };
+const generatePlannerHandler = async (req, res) => {
+  try {
+    const { weakAreas, dailyAvailableHours, targetExam, totalDaysRemaining } = req.body;
+
+    const plan = await generateStudyPlan({
+      examMode: targetExam || 'NEET',
+      dailyHours: dailyAvailableHours || 4,
+      weakSubjects: weakAreas || [],
+      targetRank: 'Top Tier',
+      completedChapters: [],
+      totalDaysRemaining: totalDaysRemaining || 30,
+    });
+
+    const saved = await prisma.studyPlan.create({
+      data: {
+        userId: req.user.userId,
+        goal: plan.goal,
+        planJson: JSON.stringify(plan),
+      },
+    });
+
+    res.status(201).json({ id: saved.id, ...plan });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to generate planner' });
+  }
+};
+
+module.exports = { createStudyPlan, getStudyPlans, generateQuizHandler, getQuizzes, generatePlannerHandler };

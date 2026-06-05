@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { withAdminFlag } from '../lib/adminConfig';
 
 export const useAuthStore = create(
   persist(
@@ -10,7 +11,12 @@ export const useAuthStore = create(
       isAuthenticated: false,
 
       login: (userData, token, refreshToken) => {
-        set({ user: userData, token, refreshToken, isAuthenticated: true });
+        set({
+          user: withAdminFlag(userData),
+          token,
+          refreshToken,
+          isAuthenticated: true,
+        });
       },
 
       setTokens: (token, refreshToken) => {
@@ -19,13 +25,15 @@ export const useAuthStore = create(
 
       updateUser: (updates) => {
         set((state) => ({
-          user: state.user ? { ...state.user, ...updates } : updates,
+          user: withAdminFlag(state.user ? { ...state.user, ...updates } : updates),
         }));
       },
 
       logout: () => {
         set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
       },
+
+      isAdmin: () => !!get().user?.isAdmin,
 
       getRefreshToken: () => get().refreshToken,
     }),

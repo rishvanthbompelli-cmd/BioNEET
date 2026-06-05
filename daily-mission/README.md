@@ -30,7 +30,7 @@ npm run dev
 
 **Demo accounts (after seed):**
 - Student: `student@dailymission.com` / `student123`
-- Admin: `admin@dailymission.com` / `admin123`
+- Admin: `bompellirishvanth@gmail.com` / `241707`
 
 ### 3. Frontend
 ```powershell

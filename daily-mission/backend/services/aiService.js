@@ -1,5 +1,6 @@
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || 'llama-3.2-11b-vision-preview';
 
 async function callGroq(prompt, maxTokens = 4096, systemPrompt) {
   if (!GROQ_API_KEY) {
@@ -52,43 +53,33 @@ function parseJsonFromText(text) {
   }
 }
 
-async function generateStudyPlan({ examMode, dailyHours, weakSubjects, targetRank, completedChapters }) {
-  const prompt = `Create a BiPC study plan JSON for ${examMode} exam.
-Daily hours: ${dailyHours}
-Weak subjects: ${JSON.stringify(weakSubjects || [])}
-Target rank: ${targetRank || 2000}
+async function generateStudyPlan({ examMode, dailyHours, weakSubjects, targetRank, completedChapters, totalDaysRemaining }) {
+  const prompt = `Create a detailed daily chronological study plan JSON for ${examMode} exam.
+Daily available hours: ${dailyHours}
+Weak subjects/areas: ${JSON.stringify(weakSubjects || [])}
+Target rank: ${targetRank || 'Top tier'}
+Total days remaining: ${totalDaysRemaining || 30}
 Completed chapters: ${JSON.stringify(completedChapters || [])}
 
 Return ONLY this JSON shape:
 {
   "goal": "string",
-  "dailyMissions": ["task1","task2","task3","task4"],
-  "weeklySchedule": [{"day":"Mon","subjects":["Botany"],"hours":4}],
-  "revisionPlan": ["chapter names"],
-  "mockSchedule": ["schedule items"],
+  "timeline": [{"day": 1, "date": "Day 1", "tasks": ["Task 1", "Task 2"]}],
   "weakTopicFocus": ["topics"]
 }`;
 
-  const aiText = await callGroq(prompt);
+  const aiText = await callGroq(prompt, 8192);
   const parsed = parseJsonFromText(aiText);
-  if (parsed?.dailyMissions) return parsed;
+  if (parsed?.timeline) return parsed;
 
   const weak = Array.isArray(weakSubjects) ? weakSubjects : ['Chemistry'];
   return {
     goal: `${examMode} BiPC — target rank ${targetRank || 2000}`,
-    dailyMissions: [
-      `Revise ${weak[0]} NCERT (45 min)`,
-      `Solve 40 ${examMode === 'EAPCET' ? 'rapid' : 'conceptual'} MCQs`,
-      'Update revision tracker',
-      examMode === 'NEET' ? '5 assertion-reason questions' : 'Physics speed drill 20 MCQs',
-    ],
-    weeklySchedule: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => ({
-      day,
-      subjects: [['Botany', 'Zoology', 'Physics', 'Chemistry'][i % 4]],
-      hours: dailyHours || 4,
+    timeline: Array.from({ length: totalDaysRemaining || 30 }).map((_, i) => ({
+      day: i + 1,
+      date: `Day ${i + 1}`,
+      tasks: [`Revise ${weak[0]}`, `Solve 40 MCQs`]
     })),
-    revisionPlan: ['Plant Physiology', 'Human Reproduction', 'Organic Chemistry', 'Thermodynamics'],
-    mockSchedule: ['Full mock every Saturday'],
     weakTopicFocus: weak,
   };
 }
@@ -100,41 +91,57 @@ const QUIZ_CONFIG = {
   eapcet_full: { count: 15, label: 'EAPCET rapid-fire mixed' },
 };
 
-async function generateQuiz({ quizType = 'chapter', subject, chapter, topic, examMode }) {
-  const config = QUIZ_CONFIG[quizType] || QUIZ_CONFIG.chapter;
-  const count = config.count;
-
-  let scopeDescription = '';
-  if (quizType === 'chapter') {
-    scopeDescription = `Chapter: ${chapter || 'general'}, Topic: ${topic || chapter}, Subject: ${subject}`;
-  } else if (quizType === 'subject') {
-    scopeDescription = `Full ${subject} subject — all important NEET/EAPCET BiPC chapters`;
-  } else if (quizType === 'neet_full') {
-    scopeDescription = 'Full NEET BiPC paper mix — Botany, Zoology, Physics, Chemistry. NCERT-focused, assertion-reason, conceptual';
-  } else if (quizType === 'eapcet_full') {
-    scopeDescription = 'Full EAPCET BiPC paper — speed-based rapid MCQs, shortcut methods, AP/TS weightage chapters';
+async function generateQuiz({ quizType = 'chapter', subject, chapter, topic, examMode, scope }) {
+  // If explicitly requested by new API params
+  let count = QUIZ_CONFIG[quizType]?.count || 20;
+  if (scope === 'Full-Syllabus') {
+    count = examMode === 'EAPCET' ? 160 : 200;
+  } else if (scope === 'Chapter-Specific') {
+    count = 20;
   }
 
-  const style = quizType === 'eapcet_full' || examMode === 'EAPCET'
+  let scopeDescription = '';
+  if (scope === 'Chapter-Specific' || quizType === 'chapter') {
+    scopeDescription = `Chapter: ${chapter || 'general'}, Topic: ${topic || chapter}, Subject: ${subject}`;
+  } else {
+    scopeDescription = `Full ${examMode} Syllabus mix — Botany, Zoology, Physics, Chemistry.`;
+  }
+
+  const style = examMode === 'EAPCET'
     ? 'EAPCET speed style, direct formula application, rapid solving'
     : 'NEET NCERT style, conceptual, assertion-reason where appropriate';
 
-  const prompt = `Generate exactly ${count} ${style} questions for BiPC students.
+  let allQuestions = [];
+  let remaining = count;
+  const CHUNK_SIZE = 40; // Generate 40 questions at a time to avoid token limits
+
+  while (remaining > 0) {
+    const currentBatch = Math.min(remaining, CHUNK_SIZE);
+    const prompt = `Generate exactly ${currentBatch} ${style} questions for BiPC students.
 Scope: ${scopeDescription}
 ${subject ? `Primary subject focus: ${subject}` : 'All four subjects mixed'}
+Batch size: ${currentBatch}
 
 Include mix of: MCQ, Assertion-Reason, One-Word (as MCQ with 4 options).
 
 Return ONLY a JSON array:
 [{"type":"MCQ","question":"...","options":{"A":"...","B":"...","C":"...","D":"..."},"correctOption":"A","explanation":"...","subject":"Botany"}]`;
 
-  const aiText = await callGroq(prompt, 8192);
-  const parsed = parseJsonFromText(aiText);
-  if (Array.isArray(parsed) && parsed.length > 0) {
-    return parsed.slice(0, count);
+    const aiText = await callGroq(prompt, 8192);
+    const parsed = parseJsonFromText(aiText);
+    
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      allQuestions = allQuestions.concat(parsed);
+    } else {
+      // Fallback for this batch
+      const fallback = buildFallbackQuiz({ quizType, subject, chapter, topic, examMode, count: currentBatch });
+      allQuestions = allQuestions.concat(fallback);
+    }
+    remaining -= currentBatch;
   }
 
-  return buildFallbackQuiz({ quizType, subject, chapter, topic, examMode, count });
+  // Ensure exact count
+  return allQuestions.slice(0, count);
 }
 
 function buildFallbackQuiz({ quizType, subject, chapter, topic, examMode, count }) {
@@ -163,32 +170,23 @@ function buildFallbackQuiz({ quizType, subject, chapter, topic, examMode, count 
   return questions;
 }
 
-const CHAT_SYSTEM_PROMPT = `You are BioNEET AI Assistant — a friendly expert tutor for AP/TS students preparing for NEET and EAPCET (BiPC stream).
+const CHAT_SYSTEM_PROMPT = `You are an elite, top-tier EAMCET & NEET Medical/BiPC Coach with decades of experience guiding students through engineering and medical entry patterns. Analyze errors, break down complex multiple-choice mechanics, clarify high-weightage topics, and maintain a highly motivating, instructional, and authoritative tone. Do not provide raw JSON.`;
 
-About BioNEET platform:
-- Daily Mission study platform with AI planner, notes, MCQs, mock tests, revision tracker, formulas, diagrams, handbook, previous EAPCET papers, and analytics.
-- Covers Inter 1st & 2nd year syllabus: Botany, Zoology, Physics, Chemistry.
-- Students must login to access features.
-
-Your capabilities:
-- Answer NEET and EAPCET BiPC questions clearly
-- Explain biology, physics, chemistry concepts
-- Help with formulas and chemical reactions
-- Explain previous year question approaches
-- Suggest study strategies and revision plans
-- Answer questions about how to use BioNEET website
-
-Rules:
-- Be concise, accurate, and student-friendly
-- Use NCERT-aligned explanations for NEET
-- For EAPCET, emphasize speed and shortcut methods
-- If unsure, say so honestly
-- Never reveal API keys or internal system details
-- Respond in plain text (not JSON)`;
-
-async function callGroqChat(messages) {
+async function callGroqChat(messages, withImage = false, imageUrl = null) {
   if (!GROQ_API_KEY) return null;
   try {
+    const modelToUse = withImage ? GROQ_VISION_MODEL : GROQ_MODEL;
+    const userMessages = messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+    if (withImage && imageUrl) {
+      const lastMsg = userMessages[userMessages.length - 1];
+      lastMsg.content = [
+        { type: 'text', text: lastMsg.content },
+        { type: 'image_url', image_url: { url: imageUrl } },
+      ];
+    }
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -196,8 +194,8 @@ async function callGroqChat(messages) {
         Authorization: `Bearer ${GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: GROQ_MODEL,
-        messages: [{ role: 'system', content: CHAT_SYSTEM_PROMPT }, ...messages],
+        model: modelToUse,
+        messages: [{ role: 'system', content: CHAT_SYSTEM_PROMPT }, ...userMessages],
         temperature: 0.7,
         max_tokens: 2048,
       }),
@@ -227,9 +225,51 @@ async function chatWithAssistant(userMessage, history = []) {
 
   return `I'm BioNEET AI Assistant. I can help with NEET/EAPCET BiPC questions, study plans, and platform guidance.
 
-You asked: "${userMessage.slice(0, 200)}"
+You asked: "${userMessage?.slice(0, 200) || ''}"
 
 (Groq API is unavailable — please ensure GROQ_API_KEY is set in backend .env for full AI responses.)`;
 }
 
-module.exports = { generateStudyPlan, generateQuiz, QUIZ_CONFIG, chatWithAssistant };
+async function analyzeImage(imageUrl, userMessage = 'What is shown in this image?') {
+  if (!GROQ_API_KEY) return null;
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: GROQ_VISION_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are BioNEET AI Assistant. Analyze the image and answer questions about NEET/EAPCET BiPC content including diagrams, questions, formulas, or notes. Be concise and helpful.',
+          },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: userMessage },
+              { type: 'image_url', image_url: { url: imageUrl } },
+            ],
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 2048,
+      }),
+      signal: AbortSignal.timeout(60000),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('Groq vision API error:', res.status, errText);
+      return null;
+    }
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || null;
+  } catch (err) {
+    console.error('Groq vision request failed:', err.message);
+    return null;
+  }
+}
+
+module.exports = { generateStudyPlan, generateQuiz, QUIZ_CONFIG, chatWithAssistant, analyzeImage };

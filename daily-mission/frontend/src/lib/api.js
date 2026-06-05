@@ -93,6 +93,7 @@ export const aiApi = {
   getStudyPlans: () => api.get('/ai/study-plans'),
   generateQuiz: (data) => api.post('/ai/quiz', data),
   getQuizzes: () => api.get('/ai/quizzes'),
+  generatePlanner: (data) => api.post('/ai/planner/generate', data),
 };
 
 export const chatApi = {
@@ -138,9 +139,20 @@ export const authApi = {
 };
 
 export const adminApi = {
+  getDashboardStats: () => api.get('/admin/dashboard-stats'),
   getStats: () => api.get('/admin/stats'),
   getUsers: () => api.get('/admin/users'),
+  createNote: (data) => api.post('/admin/notes', data),
+  createPaper: (data) => api.post('/admin/papers', data),
   getAnnouncements: () => api.get('/admin/announcements'),
+  deleteUser: (id) => api.delete(`/admin/users/${id}`),
+  deleteNote: (id) => api.delete(`/admin/notes/${id}`),
+  deletePaper: (id) => api.delete(`/admin/papers/${id}`),
+  // Mocks for new resource forms
+  createMockTest: (data) => api.post('/admin/mock-tests', data),
+  createFormula: (data) => api.post('/admin/formulas', data),
+  createDiagram: (data) => api.post('/admin/diagrams', data),
+  createHandbook: (data) => api.post('/admin/handbooks', data),
 };
 
 export const documentApi = {

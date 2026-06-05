@@ -1,6 +1,6 @@
 const express = require('express');
 const prisma = require('../utils/prisma');
-const { authMiddleware, adminMiddleware } = require('../middleware/authMiddleware');
+const { authMiddleware, isAdmin } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
-router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/', authMiddleware, isAdmin, async (req, res) => {
   try {
     const { title, description, fileUrl, category } = req.body;
     if (!title || !fileUrl || !category) {
@@ -33,7 +33,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   }
 });
 
-router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+router.put('/:id', authMiddleware, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, fileUrl, category } = req.body;
@@ -47,7 +47,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   }
 });
 
-router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+router.delete('/:id', authMiddleware, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     await prisma.document.delete({ where: { id: parseInt(id) } });

@@ -31,7 +31,7 @@ const PUBLIC_PATHS = ['/', '/login', '/register', '/forgot-password', '/reset-pa
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { isAuthenticated, user } = useAuthStore();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (adminOnly && user?.role !== 'ADMIN') return <Navigate to="/dashboard" replace />;
+  if (adminOnly && !user?.isAdmin) return <Navigate to="/dashboard" replace />;
   return children;
 };
 
