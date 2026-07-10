@@ -1,8 +1,14 @@
+databases:
+  - name: daily-mission-db
+    plan: free
+
 services:
   - type: web
     name: daily-mission-backend
-    env: node
-    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy
+    runtime: node
+    plan: free
+    rootDir: daily-mission/backend
+    buildCommand: npm install && npx prisma generate && npx prisma db push
     startCommand: npm start
     envVars:
       - key: DATABASE_URL
@@ -15,11 +21,9 @@ services:
         sync: false
       - key: GROQ_MODEL
         value: llama-3.3-70b-versatile
-      - key: FRONTEND_URL
-        sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
-
-  - type: psql
-    name: daily-mission-db
-    plan: free
+      - key: FRONTEND_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
