@@ -1,4 +1,11 @@
 # BioNEET Daily Mission
+email ravali 
+mobile css improve cheyali blue color change cheyali
+css improve cheyali blue color change cheyali
+something 3d secens petali about bioneet videoes petali in bg
+notification ravali in email and after deployed in hosting.
+
+
 
 AI-powered BiPC preparation platform for **NEET** and **EAPCET** (AP/TS students).
 
