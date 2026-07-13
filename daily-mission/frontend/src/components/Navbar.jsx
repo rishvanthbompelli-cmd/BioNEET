@@ -80,7 +80,7 @@ export default function Navbar({ onLogout }) {
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm md:hidden" onClick={() => setMobileMenuOpen(false)}>
           <div 
-            className="w-64 h-full bg-dark-900 border-r border-white/10 shadow-2xl flex flex-col transform transition-transform"
+            className="w-64 h-full bg-dark-900 border-r border-white/10 shadow-2xl flex flex-col transform transform-gpu transition-transform will-change-transform"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 flex items-center justify-between border-b border-white/10">
@@ -98,7 +98,7 @@ export default function Navbar({ onLogout }) {
                 <Link
                   to="/admin"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm bg-accent-500/10 text-accent-400 mb-2"
+                  className="flex items-center gap-3 px-3 min-h-[48px] py-2.5 rounded-xl transition-all duration-200 text-sm bg-accent-500/10 text-accent-400 mb-2"
                 >
                   <Shield size={18} />
                   <span className="font-medium">Admin Panel</span>
@@ -110,7 +110,7 @@ export default function Navbar({ onLogout }) {
                   key={item.path}
                   to={item.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                  className="flex items-center gap-3 px-3 min-h-[48px] py-2.5 rounded-xl transition-all duration-200 text-sm text-slate-400 hover:bg-white/5 hover:text-slate-200"
                 >
                   <item.icon size={18} />
                   <span className="font-medium">{item.label}</span>
@@ -119,7 +119,7 @@ export default function Navbar({ onLogout }) {
             </div>
             
             <div className="p-4 border-t border-white/10">
-              <button onClick={logout} className="w-full flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2.5 rounded-xl transition-colors text-sm font-medium">
+              <button onClick={logout} className="w-full flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 py-2.5 min-h-[48px] rounded-xl transition-colors text-sm font-medium">
                 <LogOut size={18} /> Logout
               </button>
             </div>

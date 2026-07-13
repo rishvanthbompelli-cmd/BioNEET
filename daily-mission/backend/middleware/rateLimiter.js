@@ -20,4 +20,10 @@ const chatLimiter = rateLimit({
   message: { message: 'Chat rate limit reached. Please wait a moment.' },
 });
 
-module.exports = { generalLimiter, authLimiter, chatLimiter };
+const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: 'Too many contact submissions, please try again later.' },
+});
+
+module.exports = { generalLimiter, authLimiter, chatLimiter, contactLimiter };

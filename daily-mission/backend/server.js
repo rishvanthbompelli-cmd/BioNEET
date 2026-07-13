@@ -15,6 +15,8 @@ const chatRoutes = require('./routes/chatRoutes');
 const contentRoutes = require('./routes/contentRoutes');
 const revisionRoutes = require('./routes/revisionRoutes');
 const mockTestRoutes = require('./routes/mockTestRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const contactRoutes = require('./routes/contactRoutes');
 
 const app = express();
 

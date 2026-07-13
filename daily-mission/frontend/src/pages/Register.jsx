@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { UserPlus, Mail, Lock, User, Loader2 } from 'lucide-react';
 import { authApi } from '../lib/api';
+import EvilEye from '../components/EvilEye';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -29,9 +30,11 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-73px)] flex items-center justify-center p-4">
-      <div className="glass-card w-full max-w-md p-8 relative overflow-hidden">
-        <div className="text-center mb-8">
+    <div className="fixed inset-0 flex items-center justify-center p-4 overflow-hidden bg-black z-40">
+      <EvilEye eyeColor="#FF6F37" intensity={1.5} pupilSize={0.6} irisWidth={0.25} glowIntensity={0.35} scale={1.5} noiseScale={1} pupilFollow={1} flameSpeed={1} backgroundColor="#000000" className="absolute inset-0 z-0 pointer-events-none" />
+      <div className="glass-card w-full max-w-md p-8 relative z-10">
+        <div className="relative z-10">
+          <div className="text-center mb-8">
           <div className="mx-auto w-12 h-12 bg-accent-500/20 border border-accent-500/30 rounded-2xl flex items-center justify-center mb-4 text-accent-400">
             <UserPlus size={24} />
           </div>
@@ -70,6 +73,7 @@ export default function Register() {
 
         <div className="mt-6 text-center text-sm text-slate-400">
           Already have an account? <Link to="/login" className="text-accent-400 font-medium">Sign In</Link>
+        </div>
         </div>
       </div>
     </div>

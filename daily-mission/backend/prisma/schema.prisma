@@ -33,6 +33,32 @@ model User {
   refreshTokens  RefreshToken[]
   passwordResets PasswordReset[]
   chatMessages   ChatMessage[]
+  notifications  Notification[]
+  contactSubmissions ContactSubmission[]
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   @default("SYSTEM") // SYSTEM | ANNOUNCEMENT | ACHIEVEMENT | UPDATE | MESSAGE
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model ContactSubmission {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model RefreshToken {

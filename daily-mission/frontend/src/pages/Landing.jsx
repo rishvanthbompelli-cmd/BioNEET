@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, BrainCircuit, Rocket, Target, Zap, LayoutDashboard, Database, FileText, MessageCircle, Check, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { papersApi } from '../lib/api';
+import Lightfall from '../components/Lightfall';
 
 const FeatureCard = ({ icon: Icon, title, description, colorClass }) => (
-  <motion.div whileHover={{ y: -5 }} className="glass-card p-6 flex flex-col gap-4 relative overflow-hidden group">
+  <motion.div whileHover={{ y: -5 }} className="glass-card p-6 flex flex-col gap-4 relative overflow-hidden group transform-gpu will-change-transform">
     <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full blur-2xl opacity-10 group-hover:opacity-30 transition-opacity ${colorClass}`} />
     <div className={`p-3 rounded-xl bg-white/5 border border-white/10 w-fit ${colorClass.replace('bg-', 'text-')}`}>
       <Icon size={24} />
@@ -38,7 +39,26 @@ export default function Landing() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
+      <div className="fixed inset-0 w-full h-full -z-10 pointer-events-auto">
+        <Lightfall
+          colors={['#0062ff', '#ffffff', '#000000']}
+          backgroundColor="#090e17"
+          speed={5}
+          streakCount={2}
+          streakWidth={1}
+          streakLength={1}
+          glow={1}
+          density={0.6}
+          twinkle={1}
+          zoom={3}
+          backgroundGlow={0.5}
+          opacity={1}
+          mouseInteraction
+          mouseStrength={0.5}
+          mouseRadius={1}
+        />
+      </div>
       <nav className="glass-panel px-6 py-4 flex justify-between items-center sticky top-0 z-50">
         <span className="text-2xl font-bold text-gradient">BioNEET</span>
         <div className="flex gap-3">
@@ -48,25 +68,25 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section className="flex-1 flex flex-col items-center justify-center text-center px-4 pt-16 pb-24 relative">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-500/20 rounded-full blur-[100px] pointer-events-none -z-10" />
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto">
+      <section className="flex-1 flex flex-col items-center justify-center text-center px-4 pt-16 pb-24 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-primary-500/20 rounded-full blur-[100px] pointer-events-none -z-10" />
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto w-full transform-gpu will-change-transform">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8">
             <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-400 opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-accent-500" /></span>
             <span className="text-sm text-slate-300">AI Chatbot + Previous EAPCET Papers Live</span>
           </div>
-          <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-white tracking-tight mb-6">
             Crack NEET & EAPCET with<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-accent-400">BioNEET Daily Mission</span>
           </h1>
-          <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto px-2">
             Personalized AI study plans, 88-chapter revision tracker, chapter-wise notes, previous AP/TS EAPCET papers, and an AI tutor — built for BiPC aspirants.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/register" className="w-full sm:w-auto px-8 py-4 bg-primary-500 hover:bg-primary-400 text-white font-bold rounded-xl flex items-center justify-center gap-2 glow-effect">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+            <Link to="/register" className="w-full sm:w-auto min-h-[48px] px-8 py-4 bg-primary-500 hover:bg-primary-400 text-white font-bold rounded-xl flex items-center justify-center gap-2 glow-effect">
               Start Free <ArrowRight size={20} />
             </Link>
-            <Link to="/login" className="w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold rounded-xl">Sign In</Link>
+            <Link to="/login" className="w-full sm:w-auto min-h-[48px] flex items-center justify-center px-8 py-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold rounded-xl">Sign In</Link>
           </div>
         </motion.div>
       </section>
@@ -92,7 +112,7 @@ export default function Landing() {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-4">Previous EAPCET Papers</h2>
           <p className="text-slate-400 mb-8">AP & TS EAPCET BiPC question papers from 2020–2025. Login to view and download.</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {['AP EAPCET', 'TS EAPCET', '2020–2025', 'BiPC Stream'].map((label) => (
               <div key={label} className="glass-card p-4 text-center">
                 <Rocket className="mx-auto text-primary-400 mb-2" size={24} />
@@ -103,7 +123,7 @@ export default function Landing() {
           {paperStats.years.length > 0 && (
             <p className="text-slate-500 text-sm mb-6">Years available: {paperStats.years.join(', ')}</p>
           )}
-          <Link to="/register" className="inline-flex items-center gap-2 bg-accent-500 hover:bg-accent-400 text-white px-6 py-3 rounded-xl font-semibold">
+          <Link to="/register" className="inline-flex items-center justify-center w-full sm:w-auto min-h-[48px] gap-2 bg-accent-500 hover:bg-accent-400 text-white px-6 py-3 rounded-xl font-semibold">
             Login to Access Papers <ArrowRight size={18} />
           </Link>
         </div>
@@ -113,7 +133,7 @@ export default function Landing() {
       <section className="py-20 px-4 bg-dark-800/30">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-white text-center mb-12">What Students Say</h2>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {[
               { name: 'Priya S.', text: 'The revision tracker helped me cover all 88 chapters systematically. Cleared EAPCET with a great rank!' },
               { name: 'Arjun K.', text: 'AI quiz generator is amazing for last-minute NEET prep. Notes are concise and NCERT-aligned.' },
@@ -132,7 +152,7 @@ export default function Landing() {
       <section className="py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-12">Simple Pricing</h2>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="glass-card p-8 border border-white/10">
               <h3 className="text-xl font-bold text-white mb-2">Free</h3>
               <div className="text-4xl font-extrabold text-primary-400 mb-4">₹0</div>
@@ -141,7 +161,7 @@ export default function Landing() {
                   <li key={f} className="flex items-center gap-2"><Check size={16} className="text-green-400" />{f}</li>
                 ))}
               </ul>
-              <Link to="/register" className="block w-full py-3 bg-white/10 hover:bg-white/15 text-white rounded-xl font-semibold">Get Started</Link>
+              <Link to="/register" className="block w-full min-h-[48px] flex items-center justify-center py-3 bg-white/10 hover:bg-white/15 text-white rounded-xl font-semibold">Get Started</Link>
             </div>
             <div className="glass-card p-8 border border-primary-500/30 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-500 text-white text-xs px-3 py-1 rounded-full">Coming Soon</div>
@@ -152,7 +172,7 @@ export default function Landing() {
                   <li key={f} className="flex items-center gap-2"><Check size={16} className="text-green-400" />{f}</li>
                 ))}
               </ul>
-              <button disabled className="block w-full py-3 bg-primary-500/50 text-white/70 rounded-xl font-semibold cursor-not-allowed">Notify Me</button>
+              <button disabled className="block w-full min-h-[48px] flex items-center justify-center py-3 bg-primary-500/50 text-white/70 rounded-xl font-semibold cursor-not-allowed">Notify Me</button>
             </div>
           </div>
         </div>

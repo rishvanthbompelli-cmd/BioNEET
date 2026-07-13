@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { LogIn, Mail, Lock, Loader2 } from 'lucide-react';
 import { authApi } from '../lib/api';
+import EvilEye from '../components/EvilEye';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -70,10 +71,12 @@ export default function Login() {
   }, []);
 
   return (
-    <div className="min-h-[calc(100vh-73px)] flex items-center justify-center p-4">
-      <div className="glass-card w-full max-w-md p-8 relative overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="text-center mb-8 relative z-10">
+    <div className="fixed inset-0 flex items-center justify-center p-4 overflow-hidden bg-black z-40">
+      <EvilEye eyeColor="#FF6F37" intensity={1.5} pupilSize={0.6} irisWidth={0.25} glowIntensity={0.35} scale={1.5} noiseScale={1} pupilFollow={1} flameSpeed={1} backgroundColor="#000000" className="absolute inset-0 z-0 pointer-events-none" />
+      <div className="glass-card w-full max-w-md p-8 relative z-10">
+        <div className="relative z-10">
+          <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary-500/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="text-center mb-8 relative z-10">
           <div className="mx-auto w-12 h-12 bg-primary-500/20 border border-primary-500/30 rounded-2xl flex items-center justify-center mb-4 text-primary-400">
             <LogIn size={24} />
           </div>
@@ -122,6 +125,7 @@ export default function Login() {
         </div>
         <div className="mt-3 text-center">
           <Link to="/" className="text-xs text-slate-500 hover:text-slate-300">← Back to BioNEET home</Link>
+        </div>
         </div>
       </div>
     </div>

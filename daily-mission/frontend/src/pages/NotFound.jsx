@@ -13,7 +13,7 @@ const NotFound = () => {
         </p>
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+          className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-500 text-white font-medium py-2 px-6 rounded-lg transition-colors"
         >
           <Home className="w-5 h-5" />
           Back to Dashboard

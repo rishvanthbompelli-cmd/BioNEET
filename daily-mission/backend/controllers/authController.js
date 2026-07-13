@@ -11,6 +11,7 @@ const {
 } = require('../utils/tokenService');
 const { validateEmail, validatePassword, validateName, sanitizeString } = require('../utils/validate');
 const { resolveRole } = require('../utils/adminConfig');
+const { sendPasswordResetEmail, sendWelcomeEmail } = require('../services/emailService');
 
 async function ensureCorrectRole(user) {
   const correctRole = resolveRole(user.email);
@@ -46,6 +47,10 @@ const registerUser = async (req, res) => {
     });
 
     const { accessToken, refreshToken } = await createTokenPair(user);
+    // Fire-and-forget welcome email (never blocks registration)
+    sendWelcomeEmail(user.email, user.name).catch((e) =>
+      console.error('Welcome email failed:', e.message)
+    );
     res.status(201).json({
       message: 'User registered successfully',
       token: accessToken,
@@ -203,7 +208,11 @@ const forgotPassword = async (req, res) => {
 
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
     console.log(`[Password Reset] ${email}: ${resetUrl}`);
-
+    // Send the reset email (awaited so we can log failures; response stays generic)
+    const emailResult = await sendPasswordResetEmail(email, resetUrl);
+    if (!emailResult.ok) {
+      console.error(`[Password Reset] Email send failed for ${email}: ${emailResult.error}`);
+    }
     res.json({
       message: 'If that email exists, a reset link has been sent.',
       ...(process.env.NODE_ENV !== 'production' && { resetUrl }),

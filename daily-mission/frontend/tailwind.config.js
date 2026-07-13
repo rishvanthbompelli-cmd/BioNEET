@@ -8,17 +8,25 @@ export default {
     extend: {
       colors: {
         dark: {
+          950: '#0b1120',
           900: '#0f172a',
           800: '#1e293b',
           700: '#334155',
+          600: '#475569',
         },
+        // Emerald Green brand scale
         primary: {
-          500: '#3b82f6',
-          400: '#60a5fa',
+          700: '#047857',
+          600: '#059669',
+          500: '#10b981',
+          400: '#34d399',
+          300: '#6ee7b7',
         },
+        // Complementary teal accent (pairs with emerald for gradients)
         accent: {
-          500: '#8b5cf6',
-          400: '#a78bfa',
+          600: '#0d9488',
+          500: '#14b8a6',
+          400: '#2dd4bf',
         }
       },
       fontFamily: {
