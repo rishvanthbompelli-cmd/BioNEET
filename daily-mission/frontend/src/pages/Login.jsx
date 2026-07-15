@@ -3,7 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { LogIn, Mail, Lock, Loader2 } from 'lucide-react';
 import { authApi } from '../lib/api';
-import EvilEye from '../components/EvilEye';
+
+//Component inspired by Kevin Levron:
+//https://x.com/soju22/status/1858925191671271801
+  
+import Ballpit from '../components/Ballpit';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -71,10 +75,22 @@ export default function Login() {
   }, []);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-4 overflow-hidden bg-black z-40">
-      <EvilEye eyeColor="#FF6F37" intensity={1.5} pupilSize={0.6} irisWidth={0.25} glowIntensity={0.35} scale={1.5} noiseScale={1} pupilFollow={1} flameSpeed={1} backgroundColor="#000000" className="absolute inset-0 z-0 pointer-events-none" />
-      <div className="glass-card w-full max-w-md p-8 relative z-10">
-        <div className="relative z-10">
+    <div className="relative min-h-screen w-full bg-black overflow-hidden">
+      <div className="absolute inset-0 z-0">
+        <Ballpit
+          count={100}
+          gravity={0.01}
+          friction={0.9975}
+          wallBounce={0.95}
+          followCursor={true}
+          colors={[0xffffff, 0xa855f7, 0x333333]}
+        />
+      </div>
+
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-4 pointer-events-none">
+        <div className="absolute inset-0 z-0 pointer-events-none" />
+        <div className="glass-card w-full max-w-md p-8 relative z-10 pointer-events-auto">
+          <div className="relative z-10">
           <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary-500/20 rounded-full blur-3xl pointer-events-none" />
           <div className="text-center mb-8 relative z-10">
           <div className="mx-auto w-12 h-12 bg-primary-500/20 border border-primary-500/30 rounded-2xl flex items-center justify-center mb-4 text-primary-400">
@@ -129,5 +145,6 @@ export default function Login() {
         </div>
       </div>
     </div>
+  </div>
   );
 }
